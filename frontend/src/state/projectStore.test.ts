@@ -2,13 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { activeTrack, useProjectStore } from "./projectStore";
 
+const initialState = useProjectStore.getState();
+
 describe("project store", () => {
   beforeEach(() => {
-    useProjectStore.setState({
-      activeTrackId: "vocal_1",
-      selectedNoteId: "note_1",
-      selectedNoteIds: ["note_1"],
-    });
+    useProjectStore.setState(
+      { ...initialState, project: structuredClone(initialState.project) },
+      true,
+    );
   });
 
   it("updates the selected note without changing its type", () => {
@@ -55,7 +56,34 @@ describe("project store", () => {
     expect(track).toMatchObject({
       type: "instrument",
       instrumentId: "musescore_alto_sax",
-      name: "Alto Saxophone",
+      name: "1 Alto Saxophone",
     });
+  });
+
+  it("adds and removes an independent instrument track", () => {
+    vi.stubGlobal("crypto", { randomUUID: () => "sax_track" });
+    useProjectStore
+      .getState()
+      .addInstrumentTrack("musescore_alto_sax", "Alto Saxophone");
+
+    expect(useProjectStore.getState().activeTrackId).toBe("instrument_sax_track");
+    expect(activeTrack(useProjectStore.getState())).toMatchObject({
+      type: "instrument",
+      instrumentId: "musescore_alto_sax",
+      notes: [],
+    });
+
+    useProjectStore.getState().addNote("D4", 4);
+    expect(activeTrack(useProjectStore.getState()).notes).toHaveLength(1);
+
+    useProjectStore.getState().deleteInstrumentTrack("instrument_sax_track");
+    expect(useProjectStore.getState().project.tracks).toHaveLength(2);
+    expect(useProjectStore.getState().activeTrackId).toBe("vocal_1");
+    vi.unstubAllGlobals();
+  });
+
+  it("does not delete the vocal track", () => {
+    useProjectStore.getState().deleteInstrumentTrack("vocal_1");
+    expect(useProjectStore.getState().project.tracks).toHaveLength(2);
   });
 });

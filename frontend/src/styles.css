@@ -61,13 +61,20 @@ button { color: inherit; }
 
 .workspace { display: grid; grid-template-columns: 180px minmax(0, 1fr) 210px; min-height: 0; }
 .track-list, .note-inspector { min-width: 0; background: #22252a; }
-.track-list { border-right: 1px solid #0c0d0f; }
+.track-list { overflow-y: auto; border-right: 1px solid #0c0d0f; }
 .note-inspector { border-left: 1px solid #0c0d0f; }
 .panel-heading { height: 33px; padding: 9px 11px; border-bottom: 1px solid #111317; color: #9099a3; font-size: 10px; font-weight: 800; text-transform: uppercase; user-select: none; }
-.track-row { width: 100%; min-height: 52px; padding: 0 8px 8px; border-bottom: 1px solid #17191c; background: transparent; }
+.track-heading { display: flex; align-items: center; justify-content: space-between; padding: 4px 7px 4px 11px; }
+.track-add, .track-delete { display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; color: #aeb6be; background: transparent; cursor: pointer; }
+.track-add { width: 25px; height: 25px; border-radius: 3px; }
+.track-add:hover:not(:disabled), .track-delete:hover { color: #f3f5f6; background: #3b4148; }
+.track-add:disabled { color: #535a62; cursor: not-allowed; }
+.track-row { position: relative; width: 100%; min-height: 52px; padding: 0 8px 8px; border-bottom: 1px solid #17191c; background: transparent; }
 .track-row:hover { background: #2a2e34; }
 .track-row.active { box-shadow: inset 3px 0 #10a8a0; background: #30353b; }
-.track-main { display: grid; grid-template-columns: 22px 1fr; width: 100%; min-height: 51px; padding: 8px 2px; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.track-main { display: grid; grid-template-columns: 22px 1fr; width: 100%; min-height: 51px; padding: 8px 25px 8px 2px; border: 0; color: inherit; background: transparent; text-align: left; cursor: pointer; }
+.track-main span { min-width: 0; }
+.track-delete { position: absolute; top: 9px; right: 7px; width: 24px; height: 24px; border-radius: 3px; color: #8e969f; }
 .track-row svg { margin-top: 3px; color: #c4cbd2; }
 .track-row strong, .track-row small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track-row strong { font-size: 12px; font-weight: 650; }
@@ -145,9 +152,10 @@ button { color: inherit; }
   .transport { grid-column: 2; padding-right: 8px; }
   .project-controls { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; padding: 0 8px; border-top: 1px solid #292d32; }
   .workspace { grid-template: 82px minmax(180px, 1fr) 156px / minmax(0, 1fr); }
-  .track-list { display: flex; grid-row: 1; overflow: hidden; border-right: 0; border-bottom: 1px solid #0c0d0f; }
-  .track-list .panel-heading { display: none; }
-  .track-row { width: 50%; min-height: 52px; padding-bottom: 0; border-right: 1px solid #17191c; border-bottom: 0; }
+  .track-list { display: flex; grid-row: 1; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid #0c0d0f; }
+  .track-list .track-heading { flex: 0 0 34px; height: 82px; padding: 4px; border-right: 1px solid #17191c; }
+  .track-heading span { display: none; }
+  .track-row { flex: 0 0 178px; min-height: 82px; padding-bottom: 0; border-right: 1px solid #17191c; border-bottom: 0; }
   .track-main { min-height: 50px; }
   .editor-area { grid-row: 2; }
   .note-inspector { grid-row: 3; overflow: auto; border-top: 1px solid #0c0d0f; border-left: 0; }

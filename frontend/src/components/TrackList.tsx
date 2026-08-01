@@ -1,4 +1,4 @@
-import { Mic2, Piano } from "lucide-react";
+import { Mic2, Music2, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { listInstruments } from "../api/client";
@@ -10,6 +10,8 @@ export function TrackList() {
   const activeTrackId = useProjectStore((state) => state.activeTrackId);
   const setActiveTrack = useProjectStore((state) => state.setActiveTrack);
   const setTrackInstrument = useProjectStore((state) => state.setTrackInstrument);
+  const addInstrumentTrack = useProjectStore((state) => state.addInstrumentTrack);
+  const deleteInstrumentTrack = useProjectStore((state) => state.deleteInstrumentTrack);
   const [instruments, setInstruments] = useState<InstrumentSummary[]>([]);
 
   useEffect(() => {
@@ -18,9 +20,26 @@ export function TrackList() {
 
   return (
     <aside className="track-list" aria-label="Tracks">
-      <div className="panel-heading">Tracks</div>
+      <div className="panel-heading track-heading">
+        <span>Tracks</span>
+        <button
+          className="track-add"
+          title="Add instrument track"
+          disabled={tracks.length >= 16}
+          onClick={() => {
+            const preset = instruments[0] ?? {
+              id: "musescore_general",
+              name: "Acoustic Grand Piano",
+              format: "sf3" as const,
+            };
+            addInstrumentTrack(preset.id, preset.name);
+          }}
+        >
+          <Plus size={14} aria-hidden="true" />
+        </button>
+      </div>
       {tracks.map((track) => {
-        const Icon = track.type === "vocal" ? Mic2 : Piano;
+        const Icon = track.type === "vocal" ? Mic2 : Music2;
         const resource = track.type === "vocal" ? track.voicebankId : track.instrumentId;
         return (
           <div
@@ -34,6 +53,15 @@ export function TrackList() {
                 <small>{resource}</small>
               </span>
             </button>
+            {track.type === "instrument" ? (
+              <button
+                className="track-delete"
+                title={`Delete ${track.name} track`}
+                onClick={() => deleteInstrumentTrack(track.id)}
+              >
+                <Trash2 size={13} aria-hidden="true" />
+              </button>
+            ) : null}
             {track.type === "instrument" && instruments.length > 0 ? (
               <select
                 aria-label="Instrument sound"

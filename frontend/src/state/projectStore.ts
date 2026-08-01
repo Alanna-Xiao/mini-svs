@@ -19,6 +19,8 @@ type ProjectState = {
   setGrid: (grid: GridUnit) => void;
   setActiveTrack: (trackId: string) => void;
   setTrackInstrument: (trackId: string, instrumentId: string, name: string) => void;
+  addInstrumentTrack: (instrumentId: string, name: string) => void;
+  deleteInstrumentTrack: (trackId: string) => void;
   selectNote: (noteId: string | null, additive?: boolean) => void;
   selectAllNotes: () => void;
   addNote: (pitch: string, start: number) => void;
@@ -41,7 +43,7 @@ const initialTracks: Track[] = [
   {
     id: "instrument_1",
     type: "instrument",
-    name: "Piano",
+    name: "1 Acoustic Grand Piano",
     instrumentId: "musescore_general",
     notes: [
       { id: "piano_c", type: "instrument", pitch: "C4", start: 0, duration: 8, velocity: 96 },
@@ -81,11 +83,49 @@ export const useProjectStore = create<ProjectState>((set) => ({
         ...state.project,
         tracks: state.project.tracks.map((track) =>
           track.id === trackId && track.type === "instrument"
-            ? { ...track, instrumentId, name }
+            ? {
+                ...track,
+                instrumentId,
+                name: `${track.name.match(/^\d+ /)?.[0] ?? ""}${name}`,
+              }
             : track,
         ),
       },
     })),
+  addInstrumentTrack: (instrumentId, name) =>
+    set((state) => {
+      if (state.project.tracks.length >= 16) return state;
+      const id = `instrument_${crypto.randomUUID()}`;
+      const instrumentNumber =
+        state.project.tracks.filter((track) => track.type === "instrument").length + 1;
+      const track: Track = {
+        id,
+        type: "instrument",
+        name: `${instrumentNumber} ${name}`,
+        instrumentId,
+        notes: [],
+      };
+      return {
+        project: { ...state.project, tracks: [...state.project.tracks, track] },
+        activeTrackId: id,
+        selectedNoteId: null,
+        selectedNoteIds: [],
+      };
+    }),
+  deleteInstrumentTrack: (trackId) =>
+    set((state) => {
+      const target = state.project.tracks.find((track) => track.id === trackId);
+      if (target?.type !== "instrument") return state;
+      const tracks = state.project.tracks.filter((track) => track.id !== trackId);
+      const activeTrackId =
+        state.activeTrackId === trackId ? tracks[0]?.id ?? state.activeTrackId : state.activeTrackId;
+      return {
+        project: { ...state.project, tracks },
+        activeTrackId,
+        selectedNoteId: state.activeTrackId === trackId ? null : state.selectedNoteId,
+        selectedNoteIds: state.activeTrackId === trackId ? [] : state.selectedNoteIds,
+      };
+    }),
   selectNote: (noteId, additive = false) =>
     set((state) => {
       if (noteId === null) return { selectedNoteId: null, selectedNoteIds: [] };

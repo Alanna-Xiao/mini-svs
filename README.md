@@ -28,7 +28,7 @@ Implemented so far:
 
 Vocal rendering supports the phonemes installed in the selected sample voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
 
-The bundled MuseScore General configuration exposes eight selectable presets from the same local SoundFont: acoustic grand piano, nylon guitar, acoustic bass, violin, string ensemble, trumpet, alto saxophone, and flute. Changing the instrument menu changes the active accompaniment track's General MIDI program without duplicating the SoundFont file.
+The bundled MuseScore General configuration exposes eight selectable presets from the same local SoundFont: acoustic grand piano, nylon guitar, acoustic bass, violin, string ensemble, trumpet, alto saxophone, and flute. Projects can add multiple independent instrument tracks, each with its own notes and General MIDI program, without duplicating the SoundFont file.
 
 Planned first version:
 
@@ -105,6 +105,8 @@ npm run dev
 Open `http://127.0.0.1:5173`. The Vite development server proxies `/api` requests to the backend at `http://127.0.0.1:8000`.
 
 Select a track and use **Render** to preview that track alone. Use **Mix** to render the vocal and instrument tracks together on the shared timeline.
+
+Use the **+** button in the track list to add an instrument track. Each instrument track has its own sound menu, notes, and delete button; the main vocal track is retained.
 
 For batch deletion, hold **Shift**, **Ctrl**, or **Command** while clicking notes, then use the inspector delete button or press **Delete/Backspace**. **Ctrl/Command+A** selects every note in the current track.
 
