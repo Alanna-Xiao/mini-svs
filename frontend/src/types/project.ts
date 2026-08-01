@@ -60,3 +60,9 @@ export type RenderResponse = {
   outputUrl: string;
   metadata: RenderMetadata;
 };
+
+export type InstrumentSummary = {
+  id: string;
+  name: string;
+  format: "sf2" | "sf3" | "sfz";
+};

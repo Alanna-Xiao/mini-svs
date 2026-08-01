@@ -18,6 +18,7 @@ type ProjectState = {
   setBpm: (bpm: number) => void;
   setGrid: (grid: GridUnit) => void;
   setActiveTrack: (trackId: string) => void;
+  setTrackInstrument: (trackId: string, instrumentId: string, name: string) => void;
   selectNote: (noteId: string | null, additive?: boolean) => void;
   selectAllNotes: () => void;
   addNote: (pitch: string, start: number) => void;
@@ -74,6 +75,17 @@ export const useProjectStore = create<ProjectState>((set) => ({
   setGrid: (grid) => set((state) => ({ project: { ...state.project, grid } })),
   setActiveTrack: (activeTrackId) =>
     set({ activeTrackId, selectedNoteId: null, selectedNoteIds: [] }),
+  setTrackInstrument: (trackId, instrumentId, name) =>
+    set((state) => ({
+      project: {
+        ...state.project,
+        tracks: state.project.tracks.map((track) =>
+          track.id === trackId && track.type === "instrument"
+            ? { ...track, instrumentId, name }
+            : track,
+        ),
+      },
+    })),
   selectNote: (noteId, additive = false) =>
     set((state) => {
       if (noteId === null) return { selectedNoteId: null, selectedNoteIds: [] };

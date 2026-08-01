@@ -1,4 +1,4 @@
-import type { Project, RenderResponse } from "../types/project";
+import type { InstrumentSummary, Project, RenderResponse } from "../types/project";
 
 type ApiErrorPayload = {
   error?: { code?: string; message?: string };
@@ -12,6 +12,14 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
+}
+
+export async function listInstruments(): Promise<InstrumentSummary[]> {
+  const response = await fetch("/api/instruments");
+  if (!response.ok) {
+    throw new ApiError("Could not load instruments.", "instrument_list_failed", response.status);
+  }
+  return (await response.json()) as InstrumentSummary[];
 }
 
 export async function renderProject(project: Project, trackIds?: string[]): Promise<RenderResponse> {

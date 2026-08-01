@@ -41,4 +41,21 @@ describe("project store", () => {
     );
     expect(useProjectStore.getState().selectedNoteIds).toEqual([]);
   });
+
+  it("changes the sound assigned to an instrument track", () => {
+    useProjectStore.getState().setTrackInstrument(
+      "instrument_1",
+      "musescore_alto_sax",
+      "Alto Saxophone",
+    );
+
+    const track = useProjectStore
+      .getState()
+      .project.tracks.find((item) => item.id === "instrument_1");
+    expect(track).toMatchObject({
+      type: "instrument",
+      instrumentId: "musescore_alto_sax",
+      name: "Alto Saxophone",
+    });
+  });
 });

@@ -28,6 +28,8 @@ Implemented so far:
 
 Vocal rendering supports the phonemes installed in the selected sample voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
 
+The bundled MuseScore General configuration exposes eight selectable presets from the same local SoundFont: acoustic grand piano, nylon guitar, acoustic bass, violin, string ensemble, trumpet, alto saxophone, and flute. Changing the instrument menu changes the active accompaniment track's General MIDI program without duplicating the SoundFont file.
+
 Planned first version:
 
 - React/TypeScript piano-roll editor

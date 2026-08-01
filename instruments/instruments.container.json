@@ -2,11 +2,67 @@
   "instruments": [
     {
       "id": "musescore_general",
-      "name": "MuseScore General - Acoustic Grand Piano",
+      "name": "Acoustic Grand Piano",
       "format": "sf3",
       "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
       "bank": 0,
       "program": 0
+    },
+    {
+      "id": "musescore_nylon_guitar",
+      "name": "Nylon Guitar",
+      "format": "sf3",
+      "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
+      "bank": 0,
+      "program": 24
+    },
+    {
+      "id": "musescore_acoustic_bass",
+      "name": "Acoustic Bass",
+      "format": "sf3",
+      "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
+      "bank": 0,
+      "program": 32
+    },
+    {
+      "id": "musescore_violin",
+      "name": "Violin",
+      "format": "sf3",
+      "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
+      "bank": 0,
+      "program": 40
+    },
+    {
+      "id": "musescore_strings",
+      "name": "String Ensemble",
+      "format": "sf3",
+      "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
+      "bank": 0,
+      "program": 48
+    },
+    {
+      "id": "musescore_trumpet",
+      "name": "Trumpet",
+      "format": "sf3",
+      "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
+      "bank": 0,
+      "program": 56
+    },
+    {
+      "id": "musescore_alto_sax",
+      "name": "Alto Saxophone",
+      "format": "sf3",
+      "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
+      "bank": 0,
+      "program": 65
+    },
+    {
+      "id": "musescore_flute",
+      "name": "Flute",
+      "format": "sf3",
+      "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
+      "bank": 0,
+      "program": 73
     }
   ]
 }
