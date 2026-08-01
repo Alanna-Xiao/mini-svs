@@ -18,6 +18,8 @@ def test_analyzer_detects_pitch_and_builds_stable_loop(tmp_path):
     assert processed.size < audio.size
     assert analysis.base_pitch == "A3"
     assert abs(analysis.detected_frequency_hz - 220.0) < 1.0
+    assert analysis.voiced_start_ms <= 10
+    assert analysis.attack_ms <= 50
     assert analysis.loop_end_ms - analysis.loop_start_ms >= 400
     assert not analysis.clipped
 

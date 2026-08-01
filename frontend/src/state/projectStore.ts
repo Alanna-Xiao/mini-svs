@@ -30,9 +30,9 @@ const initialTracks: Track[] = [
     name: "Main Vocal",
     voicebankId: "author_demo",
     notes: [
-      { id: "note_1", type: "vocal", pitch: "C4", start: 0, duration: 4, lyric: "a" },
-      { id: "note_2", type: "vocal", pitch: "E4", start: 4, duration: 4, lyric: "i" },
-      { id: "note_3", type: "vocal", pitch: "G4", start: 8, duration: 8, lyric: "u" },
+      { id: "note_1", type: "vocal", pitch: "G3", start: 0, duration: 4, lyric: "a" },
+      { id: "note_2", type: "vocal", pitch: "A3", start: 4, duration: 4, lyric: "i" },
+      { id: "note_3", type: "vocal", pitch: "B3", start: 8, duration: 8, lyric: "u" },
     ],
   },
   {

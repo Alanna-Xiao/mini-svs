@@ -60,7 +60,7 @@ def test_engine_renders_note_at_requested_duration_and_pitch(tmp_path):
     )
 
     assert audio.size == 22050
-    assert np.max(np.abs(audio)) == pytest.approx(0.65, abs=0.01)
+    assert 0.4 < np.max(np.abs(audio)) <= 0.66
     crossings = np.flatnonzero(np.diff(np.signbit(audio[4410:17640])))
     frequency = crossings.size / (2 * (13230 / 44100))
     assert frequency == pytest.approx(440, rel=0.05)

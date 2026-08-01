@@ -1,7 +1,9 @@
+import shutil
 from typing import Optional
 
 import librosa
 import numpy as np
+import pyrubberband as pyrb
 import soundfile as sf
 
 from app.core.errors import MiniSvsError
@@ -95,21 +97,27 @@ def _match_duration(
             details={"loopStartMs": metadata.loop_start_ms, "loopEndMs": metadata.loop_end_ms},
         )
 
-    if target_frames <= loop_start + release_frames:
-        output = np.array(sample[:target_frames], copy=True)
-        fade = min(release_frames, output.size)
-        if fade:
-            output[-fade:] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)
-        return _pad_to_length(output, target_frames)
-
-    attack = sample[:loop_start]
+    attack_frames = min(
+        round(metadata.attack_ms * sample_rate / 1000), max(1, target_frames // 4)
+    )
+    release_frames = min(release_frames, max(1, target_frames // 4))
+    attack = sample[:attack_frames]
     sustain = sample[loop_start:loop_end]
-    release = sample[-min(release_frames, sample.size) :]
-    crossfade = min(round(sample_rate * 0.02), sustain.size // 4)
-    release_crossfade = min(crossfade, release.size, sustain.size // 2)
-    sustain_frames = target_frames - attack.size - release.size + release_crossfade
-    looped = _loop_region(sustain, max(1, sustain_frames), crossfade)
-    output = _append_crossfade(np.concatenate([attack, looped]), release, release_crossfade)
+    release = sample[-release_frames:]
+    loop_crossfade = min(round(sample_rate * 0.02), sustain.size // 4)
+    attack_crossfade = min(round(sample_rate * 0.01), attack.size, sustain.size // 2)
+    release_crossfade = min(loop_crossfade, release.size, sustain.size // 2)
+    sustain_frames = max(
+        1,
+        target_frames
+        - attack.size
+        - release.size
+        + attack_crossfade
+        + release_crossfade,
+    )
+    looped = _loop_region(sustain, sustain_frames, loop_crossfade)
+    output = _append_crossfade(attack, looped, attack_crossfade)
+    output = _append_crossfade(output, release, release_crossfade)
     return _pad_to_length(output, target_frames)
 
 
@@ -140,5 +148,22 @@ def _pad_to_length(audio: np.ndarray, frames: int) -> np.ndarray:
 def _pitch_shift(audio: np.ndarray, sample_rate: int, steps: float) -> np.ndarray:
     if steps == 0:
         return np.array(audio, copy=True)
-    shifted = librosa.effects.pitch_shift(audio, sr=sample_rate, n_steps=steps)
+    if shutil.which("rubberband") is None:
+        raise MiniSvsError(
+            "pitch_engine_unavailable",
+            "Rubber Band is required for formant-preserving vocal pitch shifts.",
+        )
+    try:
+        shifted = pyrb.pitch_shift(
+            audio,
+            sample_rate,
+            steps,
+            rbargs={"--fine": "", "--formant": ""},
+        )
+    except (OSError, RuntimeError) as error:
+        raise MiniSvsError(
+            "pitch_shift_failed",
+            "Rubber Band could not pitch-shift the vocal sample.",
+            details={"reason": str(error)},
+        ) from error
     return _pad_to_length(np.asarray(shifted, dtype=np.float32), audio.size)

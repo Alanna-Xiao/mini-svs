@@ -16,9 +16,9 @@ export function PianoRoll() {
   const selectNote = useProjectStore((state) => state.selectNote);
 
   useLayoutEffect(() => {
-    const middleCRegion = Math.max(0, VISIBLE_PITCHES.indexOf("A#4") * ROW_HEIGHT);
-    if (scrollRef.current) scrollRef.current.scrollTop = middleCRegion;
-    if (pitchRulerRef.current) pitchRulerRef.current.scrollTop = middleCRegion;
+    const initialPitchRegion = Math.max(0, VISIBLE_PITCHES.indexOf("E4") * ROW_HEIGHT);
+    if (scrollRef.current) scrollRef.current.scrollTop = initialPitchRegion;
+    if (pitchRulerRef.current) pitchRulerRef.current.scrollTop = initialPitchRegion;
   }, []);
 
   const addAtPointer = (event: React.MouseEvent<HTMLDivElement>) => {

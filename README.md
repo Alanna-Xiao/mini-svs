@@ -83,6 +83,7 @@ That folder intentionally contains only numbered module files.
 Backend:
 
 ```bash
+brew install rubberband # macOS; install rubberband-cli on Linux
 python3 -m venv .venv
 .venv/bin/python -m pip install -e 'backend[dev]'
 cd backend

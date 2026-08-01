@@ -50,7 +50,7 @@ def analyze_sample(
         raise ValueError(f"Sample '{source}' does not contain detectable voice audio.")
     active_start, active_end = max(intervals, key=lambda interval: interval[1] - interval[0])
 
-    padding_before = int(0.05 * sample_rate)
+    padding_before = int(0.005 * sample_rate)
     padding_after = int(0.12 * sample_rate)
     trim_start = max(0, int(active_start) - padding_before)
     trim_end = min(audio.size, int(active_end) + padding_after)
@@ -141,7 +141,7 @@ def analyze_sample(
         voiced_end_ms=round(voiced_end_seconds * 1000),
         loop_start_ms=round(loop_start * 1000),
         loop_end_ms=round(loop_end * 1000),
-        attack_ms=min(120, max(40, round(voiced_start_seconds * 1000 + 50))),
+        attack_ms=min(80, max(20, round(voiced_start_seconds * 1000 + 30))),
         release_ms=120,
         warnings=warnings,
     )
