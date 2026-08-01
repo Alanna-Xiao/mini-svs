@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 
 import { activeTrack, selectedNote, useProjectStore } from "../state/projectStore";
 
@@ -7,26 +7,49 @@ export function NoteInspector() {
   const track = useProjectStore(activeTrack);
   const selectedCount = useProjectStore((state) => state.selectedNoteIds.length);
   const setTrackName = useProjectStore((state) => state.setTrackName);
+  const moveTrack = useProjectStore((state) => state.moveTrack);
   const updateNote = useProjectStore((state) => state.updateNote);
   const deleteSelectedNotes = useProjectStore((state) => state.deleteSelectedNotes);
+  const trackIndex = useProjectStore((state) =>
+    state.project.tracks.findIndex((item) => item.id === state.activeTrackId),
+  );
+  const trackCount = useProjectStore((state) => state.project.tracks.length);
 
   return (
     <aside className="note-inspector" aria-label="Track and note inspector">
       <div className="panel-heading">Inspector</div>
       <div className="track-inspector">
-        <label>
-          Track name
-          <input
-            maxLength={64}
-            value={track.name}
-            onChange={(event) => setTrackName(track.id, event.target.value)}
-            onBlur={(event) => {
-              if (!event.target.value.trim()) {
-                setTrackName(track.id, track.type === "vocal" ? "Vocal" : "Instrument");
-              }
-            }}
-          />
-        </label>
+        <div className="track-name-row">
+          <label>
+            Track name
+            <input
+              maxLength={64}
+              value={track.name}
+              onChange={(event) => setTrackName(track.id, event.target.value)}
+              onBlur={(event) => {
+                if (!event.target.value.trim()) {
+                  setTrackName(track.id, track.type === "vocal" ? "Vocal" : "Instrument");
+                }
+              }}
+            />
+          </label>
+          <div className="track-order" aria-label="Track order">
+            <button
+              title="Move track up"
+              disabled={trackIndex <= 0}
+              onClick={() => moveTrack(track.id, -1)}
+            >
+              <ArrowUp size={14} aria-hidden="true" />
+            </button>
+            <button
+              title="Move track down"
+              disabled={trackIndex < 0 || trackIndex >= trackCount - 1}
+              onClick={() => moveTrack(track.id, 1)}
+            >
+              <ArrowDown size={14} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
       </div>
       {selectedCount > 1 ? (
         <div className="bulk-selection">

@@ -19,6 +19,7 @@ type ProjectState = {
   setGrid: (grid: GridUnit) => void;
   setActiveTrack: (trackId: string) => void;
   setTrackName: (trackId: string, name: string) => void;
+  moveTrack: (trackId: string, direction: -1 | 1) => void;
   setTrackInstrument: (trackId: string, instrumentId: string) => void;
   setTrackVoicebank: (trackId: string, voicebankId: string) => void;
   addInstrumentTrack: (instrumentId: string, name: string) => void;
@@ -100,6 +101,17 @@ export const useProjectStore = create<ProjectState>((set) => ({
         ),
       },
     })),
+  moveTrack: (trackId, direction) =>
+    set((state) => {
+      const index = state.project.tracks.findIndex((track) => track.id === trackId);
+      const targetIndex = index + direction;
+      if (index < 0 || targetIndex < 0 || targetIndex >= state.project.tracks.length) {
+        return state;
+      }
+      const tracks = [...state.project.tracks];
+      [tracks[index], tracks[targetIndex]] = [tracks[targetIndex], tracks[index]];
+      return { project: { ...state.project, tracks } };
+    }),
   setTrackInstrument: (trackId, instrumentId) =>
     set((state) => ({
       project: {

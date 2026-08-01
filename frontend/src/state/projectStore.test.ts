@@ -106,4 +106,18 @@ describe("project store", () => {
     useProjectStore.getState().deleteTrack("vocal_1");
     expect(useProjectStore.getState().project.tracks).toHaveLength(2);
   });
+
+  it("moves tracks while preserving the active track and selection", () => {
+    useProjectStore.getState().moveTrack("instrument_1", -1);
+
+    expect(useProjectStore.getState().project.tracks.map((track) => track.id)).toEqual([
+      "instrument_1",
+      "vocal_1",
+    ]);
+    expect(useProjectStore.getState().activeTrackId).toBe("vocal_1");
+    expect(useProjectStore.getState().selectedNoteIds).toEqual(["note_1"]);
+
+    useProjectStore.getState().moveTrack("instrument_1", -1);
+    expect(useProjectStore.getState().project.tracks[0].id).toBe("instrument_1");
+  });
 });

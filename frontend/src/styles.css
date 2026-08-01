@@ -131,6 +131,11 @@ button { color: inherit; }
 .inspector-fields input, .track-inspector input { width: 100%; height: 29px; padding: 0 8px; border: 1px solid #454b52; border-radius: 3px; color: #f1f3f4; background: #191b1f; }
 .inspector-fields input:focus, .track-inspector input:focus { border-color: #10a8a0; outline: 1px solid #10a8a0; }
 .track-inspector { padding: 12px; border-bottom: 1px solid #15171a; }
+.track-name-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 7px; }
+.track-order { display: flex; gap: 3px; }
+.track-order button { display: inline-flex; align-items: center; justify-content: center; width: 29px; height: 29px; padding: 0; border: 1px solid #454b52; border-radius: 3px; color: #b6bdc4; background: #2c3036; cursor: pointer; }
+.track-order button:hover:not(:disabled) { color: #f5f7f8; background: #3a4047; }
+.track-order button:disabled { color: #555c64; cursor: not-allowed; }
 .danger-button { gap: 6px; width: 100%; margin-top: 5px; border-color: #754047; color: #efc9cd; background: #44262a; font-size: 11px; }
 .empty-inspector { padding: 16px 12px; color: #6f7881; font-size: 11px; }
 .bulk-selection { display: grid; gap: 14px; padding: 14px 12px; }

@@ -118,6 +118,7 @@ The backend may convert pitch names to MIDI note numbers and grid units to secon
 - The editor must support adding, moving, resizing, and selecting notes.
 - The track list must support multiple vocal and instrument tracks, up to the backend project limit.
 - Users must be able to rename tracks independently of the selected voicebank or instrument preset.
+- Users must be able to reorder tracks without changing track IDs, notes, or the active selection.
 - Each vocal track selects its own voicebank; each instrument track selects its own instrument preset.
 - Users may delete tracks, but the editor must retain at least one vocal track.
 - Lyric editing must stay attached to vocal notes.
