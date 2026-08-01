@@ -116,6 +116,10 @@ The backend may convert pitch names to MIDI note numbers and grid units to secon
 
 - The first screen should be the usable editor, not a marketing landing page.
 - The editor must support adding, moving, resizing, and selecting notes.
+- The track list must support multiple vocal and instrument tracks, up to the backend project limit.
+- Users must be able to rename tracks independently of the selected voicebank or instrument preset.
+- Each vocal track selects its own voicebank; each instrument track selects its own instrument preset.
+- Users may delete tracks, but the editor must retain at least one vocal track.
 - Lyric editing must stay attached to vocal notes.
 - Instrument notes must not require lyric data.
 - Playback controls must preview generated audio returned by the backend.

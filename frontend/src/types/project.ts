@@ -66,3 +66,11 @@ export type InstrumentSummary = {
   name: string;
   format: "sf2" | "sf3" | "sfz";
 };
+
+export type VoicebankSummary = {
+  id: string;
+  name: string;
+  language: string;
+  type: string;
+  license: { code: string; summary: string };
+};

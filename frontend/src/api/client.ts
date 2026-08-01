@@ -1,4 +1,9 @@
-import type { InstrumentSummary, Project, RenderResponse } from "../types/project";
+import type {
+  InstrumentSummary,
+  Project,
+  RenderResponse,
+  VoicebankSummary,
+} from "../types/project";
 
 type ApiErrorPayload = {
   error?: { code?: string; message?: string };
@@ -20,6 +25,14 @@ export async function listInstruments(): Promise<InstrumentSummary[]> {
     throw new ApiError("Could not load instruments.", "instrument_list_failed", response.status);
   }
   return (await response.json()) as InstrumentSummary[];
+}
+
+export async function listVoicebanks(): Promise<VoicebankSummary[]> {
+  const response = await fetch("/api/voicebanks");
+  if (!response.ok) {
+    throw new ApiError("Could not load voicebanks.", "voicebank_list_failed", response.status);
+  }
+  return (await response.json()) as VoicebankSummary[];
 }
 
 export async function renderProject(project: Project, trackIds?: string[]): Promise<RenderResponse> {

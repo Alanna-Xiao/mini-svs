@@ -106,7 +106,7 @@ Open `http://127.0.0.1:5173`. The Vite development server proxies `/api` request
 
 Select a track and use **Render** to preview that track alone. Use **Mix** to render the vocal and instrument tracks together on the shared timeline.
 
-Use the **+** button in the track list to add an instrument track. Each instrument track has its own sound menu, notes, and delete button; the main vocal track is retained.
+Use the microphone-plus and instrument-plus buttons in the track list to add vocal or instrument tracks. Each track has its own resource menu, notes, and delete button. Rename the active track in the Inspector; switching its voicebank or instrument does not overwrite that name. At least one vocal track is always retained.
 
 For batch deletion, hold **Shift**, **Ctrl**, or **Command** while clicking notes, then use the inspector delete button or press **Delete/Backspace**. **Ctrl/Command+A** selects every note in the current track.
 

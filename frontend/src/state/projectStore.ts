@@ -18,9 +18,12 @@ type ProjectState = {
   setBpm: (bpm: number) => void;
   setGrid: (grid: GridUnit) => void;
   setActiveTrack: (trackId: string) => void;
-  setTrackInstrument: (trackId: string, instrumentId: string, name: string) => void;
+  setTrackName: (trackId: string, name: string) => void;
+  setTrackInstrument: (trackId: string, instrumentId: string) => void;
+  setTrackVoicebank: (trackId: string, voicebankId: string) => void;
   addInstrumentTrack: (instrumentId: string, name: string) => void;
-  deleteInstrumentTrack: (trackId: string) => void;
+  addVocalTrack: (voicebankId: string) => void;
+  deleteTrack: (trackId: string) => void;
   selectNote: (noteId: string | null, additive?: boolean) => void;
   selectAllNotes: () => void;
   addNote: (pitch: string, start: number) => void;
@@ -32,7 +35,7 @@ const initialTracks: Track[] = [
   {
     id: "vocal_1",
     type: "vocal",
-    name: "Main Vocal",
+    name: "1 Main Vocal",
     voicebankId: "author_demo",
     notes: [
       { id: "note_1", type: "vocal", pitch: "G3", start: 0, duration: 4, lyric: "a" },
@@ -43,7 +46,7 @@ const initialTracks: Track[] = [
   {
     id: "instrument_1",
     type: "instrument",
-    name: "1 Acoustic Grand Piano",
+    name: "2 Piano",
     instrumentId: "musescore_general",
     notes: [
       { id: "piano_c", type: "instrument", pitch: "C4", start: 0, duration: 8, velocity: 96 },
@@ -59,6 +62,17 @@ function mapActiveTrack(
   transform: (track: Track) => Track,
 ): Track[] {
   return tracks.map((track) => (track.id === activeTrackId ? transform(track) : track));
+}
+
+function nextTrackNumber(tracks: Track[]): number {
+  const used = new Set(
+    tracks
+      .map((track) => Number(track.name.match(/^(\d+) /)?.[1]))
+      .filter((number) => Number.isInteger(number) && number > 0),
+  );
+  let number = 1;
+  while (used.has(number)) number += 1;
+  return number;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
@@ -77,18 +91,32 @@ export const useProjectStore = create<ProjectState>((set) => ({
   setGrid: (grid) => set((state) => ({ project: { ...state.project, grid } })),
   setActiveTrack: (activeTrackId) =>
     set({ activeTrackId, selectedNoteId: null, selectedNoteIds: [] }),
-  setTrackInstrument: (trackId, instrumentId, name) =>
+  setTrackName: (trackId, name) =>
+    set((state) => ({
+      project: {
+        ...state.project,
+        tracks: state.project.tracks.map((track) =>
+          track.id === trackId ? { ...track, name: name.slice(0, 64) } : track,
+        ),
+      },
+    })),
+  setTrackInstrument: (trackId, instrumentId) =>
     set((state) => ({
       project: {
         ...state.project,
         tracks: state.project.tracks.map((track) =>
           track.id === trackId && track.type === "instrument"
-            ? {
-                ...track,
-                instrumentId,
-                name: `${track.name.match(/^\d+ /)?.[0] ?? ""}${name}`,
-              }
+            ? { ...track, instrumentId }
             : track,
+        ),
+      },
+    })),
+  setTrackVoicebank: (trackId, voicebankId) =>
+    set((state) => ({
+      project: {
+        ...state.project,
+        tracks: state.project.tracks.map((track) =>
+          track.id === trackId && track.type === "vocal" ? { ...track, voicebankId } : track,
         ),
       },
     })),
@@ -96,8 +124,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set((state) => {
       if (state.project.tracks.length >= 16) return state;
       const id = `instrument_${crypto.randomUUID()}`;
-      const instrumentNumber =
-        state.project.tracks.filter((track) => track.type === "instrument").length + 1;
+      const instrumentNumber = nextTrackNumber(state.project.tracks);
       const track: Track = {
         id,
         type: "instrument",
@@ -112,10 +139,31 @@ export const useProjectStore = create<ProjectState>((set) => ({
         selectedNoteIds: [],
       };
     }),
-  deleteInstrumentTrack: (trackId) =>
+  addVocalTrack: (voicebankId) =>
+    set((state) => {
+      if (state.project.tracks.length >= 16) return state;
+      const id = `vocal_${crypto.randomUUID()}`;
+      const vocalNumber = nextTrackNumber(state.project.tracks);
+      const track: Track = {
+        id,
+        type: "vocal",
+        name: `${vocalNumber} Vocal`,
+        voicebankId,
+        notes: [],
+      };
+      return {
+        project: { ...state.project, tracks: [...state.project.tracks, track] },
+        activeTrackId: id,
+        selectedNoteId: null,
+        selectedNoteIds: [],
+      };
+    }),
+  deleteTrack: (trackId) =>
     set((state) => {
       const target = state.project.tracks.find((track) => track.id === trackId);
-      if (target?.type !== "instrument") return state;
+      if (!target) return state;
+      const vocalCount = state.project.tracks.filter((track) => track.type === "vocal").length;
+      if (target.type === "vocal" && vocalCount <= 1) return state;
       const tracks = state.project.tracks.filter((track) => track.id !== trackId);
       const activeTrackId =
         state.activeTrackId === trackId ? tracks[0]?.id ?? state.activeTrackId : state.activeTrackId;

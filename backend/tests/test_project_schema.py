@@ -70,3 +70,10 @@ def test_rejects_oversized_lyrics():
     payload["tracks"][0]["notes"][0]["lyric"] = "a" * 33
     with pytest.raises(ValidationError):
         RenderRequest.model_validate(payload)
+
+
+def test_rejects_oversized_track_names():
+    payload = project_payload()
+    payload["tracks"][0]["name"] = "v" * 65
+    with pytest.raises(ValidationError):
+        RenderRequest.model_validate(payload)

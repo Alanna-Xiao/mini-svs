@@ -44,11 +44,7 @@ describe("project store", () => {
   });
 
   it("changes the sound assigned to an instrument track", () => {
-    useProjectStore.getState().setTrackInstrument(
-      "instrument_1",
-      "musescore_alto_sax",
-      "Alto Saxophone",
-    );
+    useProjectStore.getState().setTrackInstrument("instrument_1", "musescore_alto_sax");
 
     const track = useProjectStore
       .getState()
@@ -56,7 +52,7 @@ describe("project store", () => {
     expect(track).toMatchObject({
       type: "instrument",
       instrumentId: "musescore_alto_sax",
-      name: "1 Alto Saxophone",
+      name: "2 Piano",
     });
   });
 
@@ -76,14 +72,38 @@ describe("project store", () => {
     useProjectStore.getState().addNote("D4", 4);
     expect(activeTrack(useProjectStore.getState()).notes).toHaveLength(1);
 
-    useProjectStore.getState().deleteInstrumentTrack("instrument_sax_track");
+    useProjectStore.getState().deleteTrack("instrument_sax_track");
     expect(useProjectStore.getState().project.tracks).toHaveLength(2);
     expect(useProjectStore.getState().activeTrackId).toBe("vocal_1");
     vi.unstubAllGlobals();
   });
 
-  it("does not delete the vocal track", () => {
-    useProjectStore.getState().deleteInstrumentTrack("vocal_1");
+  it("adds, renames, and removes a second vocal track", () => {
+    vi.stubGlobal("crypto", { randomUUID: () => "harmony" });
+    useProjectStore.getState().addVocalTrack("author_demo");
+    useProjectStore.getState().setTrackName("vocal_harmony", "Backing Vocal");
+
+    expect(activeTrack(useProjectStore.getState())).toMatchObject({
+      id: "vocal_harmony",
+      type: "vocal",
+      name: "Backing Vocal",
+      voicebankId: "author_demo",
+      notes: [],
+    });
+
+    useProjectStore.getState().addNote("E4", 8);
+    expect(activeTrack(useProjectStore.getState()).notes[0]).toMatchObject({
+      type: "vocal",
+      lyric: "a",
+    });
+
+    useProjectStore.getState().deleteTrack("vocal_harmony");
+    expect(useProjectStore.getState().project.tracks).toHaveLength(2);
+    vi.unstubAllGlobals();
+  });
+
+  it("does not delete the last vocal track", () => {
+    useProjectStore.getState().deleteTrack("vocal_1");
     expect(useProjectStore.getState().project.tracks).toHaveLength(2);
   });
 });

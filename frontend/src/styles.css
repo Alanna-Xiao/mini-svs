@@ -65,8 +65,10 @@ button { color: inherit; }
 .note-inspector { border-left: 1px solid #0c0d0f; }
 .panel-heading { height: 33px; padding: 9px 11px; border-bottom: 1px solid #111317; color: #9099a3; font-size: 10px; font-weight: 800; text-transform: uppercase; user-select: none; }
 .track-heading { display: flex; align-items: center; justify-content: space-between; padding: 4px 7px 4px 11px; }
+.track-actions { display: flex; align-items: center; gap: 2px; }
 .track-add, .track-delete { display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; color: #aeb6be; background: transparent; cursor: pointer; }
-.track-add { width: 25px; height: 25px; border-radius: 3px; }
+.track-add { position: relative; width: 25px; height: 25px; border-radius: 3px; }
+.track-add .track-add-badge { position: absolute; right: 2px; bottom: 2px; stroke-width: 3; }
 .track-add:hover:not(:disabled), .track-delete:hover { color: #f3f5f6; background: #3b4148; }
 .track-add:disabled { color: #535a62; cursor: not-allowed; }
 .track-row { position: relative; width: 100%; min-height: 52px; padding: 0 8px 8px; border-bottom: 1px solid #17191c; background: transparent; }
@@ -125,9 +127,10 @@ button { color: inherit; }
 .dragging-note, .dragging-note * { cursor: grabbing !important; user-select: none !important; }
 
 .inspector-fields { display: grid; gap: 12px; padding: 12px; }
-.inspector-fields label { display: grid; gap: 5px; color: #98a1aa; font-size: 10px; font-weight: 700; }
-.inspector-fields input { width: 100%; height: 29px; padding: 0 8px; border: 1px solid #454b52; border-radius: 3px; color: #f1f3f4; background: #191b1f; }
-.inspector-fields input:focus { border-color: #10a8a0; outline: 1px solid #10a8a0; }
+.inspector-fields label, .track-inspector label { display: grid; gap: 5px; color: #98a1aa; font-size: 10px; font-weight: 700; }
+.inspector-fields input, .track-inspector input { width: 100%; height: 29px; padding: 0 8px; border: 1px solid #454b52; border-radius: 3px; color: #f1f3f4; background: #191b1f; }
+.inspector-fields input:focus, .track-inspector input:focus { border-color: #10a8a0; outline: 1px solid #10a8a0; }
+.track-inspector { padding: 12px; border-bottom: 1px solid #15171a; }
 .danger-button { gap: 6px; width: 100%; margin-top: 5px; border-color: #754047; color: #efc9cd; background: #44262a; font-size: 11px; }
 .empty-inspector { padding: 16px 12px; color: #6f7881; font-size: 11px; }
 .bulk-selection { display: grid; gap: 14px; padding: 14px 12px; }
@@ -153,13 +156,14 @@ button { color: inherit; }
   .project-controls { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; padding: 0 8px; border-top: 1px solid #292d32; }
   .workspace { grid-template: 82px minmax(180px, 1fr) 156px / minmax(0, 1fr); }
   .track-list { display: flex; grid-row: 1; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid #0c0d0f; }
-  .track-list .track-heading { flex: 0 0 34px; height: 82px; padding: 4px; border-right: 1px solid #17191c; }
+  .track-list .track-heading { flex: 0 0 62px; height: 82px; padding: 4px; border-right: 1px solid #17191c; }
   .track-heading span { display: none; }
   .track-row { flex: 0 0 178px; min-height: 82px; padding-bottom: 0; border-right: 1px solid #17191c; border-bottom: 0; }
   .track-main { min-height: 50px; }
   .editor-area { grid-row: 2; }
   .note-inspector { grid-row: 3; overflow: auto; border-top: 1px solid #0c0d0f; border-left: 0; }
   .note-inspector .panel-heading { height: 27px; padding: 7px 9px; }
+  .track-inspector { padding: 8px; }
   .inspector-fields { grid-template-columns: repeat(4, minmax(62px, 1fr)) 74px; align-items: end; gap: 7px; padding: 8px; }
   .danger-button { margin: 0; }
   .statusbar { grid-template-columns: 1fr auto; padding: 0 8px; }

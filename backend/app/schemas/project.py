@@ -67,7 +67,7 @@ class InstrumentNote(NoteBase):
 class VocalTrack(StrictModel):
     id: str = Field(min_length=1)
     type: Literal["vocal"]
-    name: str = Field(min_length=1)
+    name: str = Field(min_length=1, max_length=64)
     voicebankId: str = Field(min_length=1)
     notes: List[VocalNote] = Field(max_length=2048)
 
@@ -75,7 +75,7 @@ class VocalTrack(StrictModel):
 class InstrumentTrack(StrictModel):
     id: str = Field(min_length=1)
     type: Literal["instrument"]
-    name: str = Field(min_length=1)
+    name: str = Field(min_length=1, max_length=64)
     instrumentId: str = Field(min_length=1)
     notes: List[InstrumentNote] = Field(max_length=2048)
 
