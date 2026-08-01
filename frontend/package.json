@@ -12,6 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@cloudflare/containers": "^0.3.7",
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
     "react": "latest",

@@ -1,0 +1,14 @@
+**
+!backend/
+!backend/app/
+!backend/app/**
+!backend/pyproject.toml
+!voicebanks/
+!voicebanks/author_demo/
+!voicebanks/author_demo/voicebank.json
+!voicebanks/author_demo/samples/
+!voicebanks/author_demo/samples/*.wav
+!instruments/
+!instruments/instruments.container.json
+!instruments/musescore_general/
+!instruments/musescore_general/MuseScore_General.sf3

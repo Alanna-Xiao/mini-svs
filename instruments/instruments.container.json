@@ -1,0 +1,12 @@
+{
+  "instruments": [
+    {
+      "id": "musescore_general",
+      "name": "MuseScore General - Acoustic Grand Piano",
+      "format": "sf3",
+      "path": "/app/assets/instruments/musescore_general/MuseScore_General.sf3",
+      "bank": 0,
+      "program": 0
+    }
+  ]
+}

@@ -56,7 +56,7 @@ class NoteBase(StrictModel):
 
 class VocalNote(NoteBase):
     type: Literal["vocal"]
-    lyric: str = Field(min_length=1)
+    lyric: str = Field(min_length=1, max_length=32)
 
 
 class InstrumentNote(NoteBase):
@@ -69,7 +69,7 @@ class VocalTrack(StrictModel):
     type: Literal["vocal"]
     name: str = Field(min_length=1)
     voicebankId: str = Field(min_length=1)
-    notes: List[VocalNote]
+    notes: List[VocalNote] = Field(max_length=2048)
 
 
 class InstrumentTrack(StrictModel):
@@ -77,7 +77,7 @@ class InstrumentTrack(StrictModel):
     type: Literal["instrument"]
     name: str = Field(min_length=1)
     instrumentId: str = Field(min_length=1)
-    notes: List[InstrumentNote]
+    notes: List[InstrumentNote] = Field(max_length=2048)
 
 
 Track = Annotated[Union[VocalTrack, InstrumentTrack], Field(discriminator="type")]
@@ -87,7 +87,7 @@ class RenderRequest(StrictModel):
     projectId: str = Field(min_length=1)
     bpm: float = Field(ge=20, le=400)
     grid: GridUnit
-    tracks: List[Track]
+    tracks: List[Track] = Field(max_length=16)
     sampleRate: int = Field(default=44100, ge=8000, le=192000)
     trackIds: Optional[List[str]] = None
 
@@ -113,4 +113,12 @@ class RenderRequest(StrictModel):
                     "selected track IDs are not present in the project: "
                     + ", ".join(sorted(unknown))
                 )
+        denominator = int(self.grid.split("/")[1])
+        seconds_per_tick = (4 / denominator) * 60 / self.bpm
+        latest_end = max(
+            (note.start + note.duration for track in self.tracks for note in track.notes),
+            default=0,
+        )
+        if latest_end * seconds_per_tick > 300:
+            raise ValueError("project duration may not exceed 300 seconds")
         return self

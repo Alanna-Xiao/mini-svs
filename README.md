@@ -23,6 +23,7 @@ Implemented so far:
 - note creation, selection, movement, resizing, deletion, and lyric editing
 - sample-based vowel synthesis with looping, pitch shifting, and note transitions
 - offline vocal and SoundFont instrument WAV rendering, waveform preview, playback, and stop controls
+- Cloudflare Worker gateway and container-ready Python synthesis service
 - backend, frontend, and browser workflow tests
 
 Vocal rendering supports the phonemes installed in the selected sample voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
@@ -104,6 +105,34 @@ Open `http://127.0.0.1:5173`. The Vite development server proxies `/api` request
 Select a track and use **Render** to preview that track alone. Use **Mix** to render the vocal and instrument tracks together on the shared timeline.
 
 For batch deletion, hold **Shift**, **Ctrl**, or **Command** while clicking notes, then use the inspector delete button or press **Delete/Backspace**. **Ctrl/Command+A** selects every note in the current track.
+
+## Cloudflare Deployment
+
+The frontend and API gateway run as a Cloudflare Worker. The Python synthesis engine, FluidSynth, Rubber Band, the installed author voicebank, and the local SoundFont run in a Cloudflare Container.
+
+Deployment requires:
+
+- a Cloudflare Workers Paid plan with Containers access
+- Docker with the Buildx plugin
+- Wrangler authenticated to the target Cloudflare account
+- `voicebanks/author_demo` and `instruments/musescore_general/MuseScore_General.sf3` installed locally
+
+The voice recordings and SoundFont are intentionally ignored by Git. Wrangler reads them from the local machine while building the private container image; raw source recordings are excluded by `.dockerignore`.
+
+Run the complete stack locally from `frontend/`:
+
+```bash
+npm run build
+npx wrangler dev
+```
+
+Deploy it to the configured custom domain:
+
+```bash
+npm run deploy
+```
+
+Rendered WAV files currently use temporary container storage and may disappear after the container sleeps or restarts. Users should download completed renders promptly. Persistent output storage can be added later with a private R2 bucket.
 
 ## License
 

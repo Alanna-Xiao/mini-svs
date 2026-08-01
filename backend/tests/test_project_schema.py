@@ -56,3 +56,17 @@ def test_rejects_negative_duration():
     payload["tracks"][0]["notes"][0]["duration"] = -1
     with pytest.raises(ValidationError):
         RenderRequest.model_validate(payload)
+
+
+def test_rejects_projects_longer_than_five_minutes():
+    payload = project_payload()
+    payload["tracks"][0]["notes"][0]["duration"] = 2401
+    with pytest.raises(ValidationError, match="may not exceed 300 seconds"):
+        RenderRequest.model_validate(payload)
+
+
+def test_rejects_oversized_lyrics():
+    payload = project_payload()
+    payload["tracks"][0]["notes"][0]["lyric"] = "a" * 33
+    with pytest.raises(ValidationError):
+        RenderRequest.model_validate(payload)

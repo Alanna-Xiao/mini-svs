@@ -1,11 +1,41 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "mini-svs-frontend",
+  "main": "./worker/index.ts",
   "compatibility_date": "2026-08-01",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
   },
+  "containers": [
+    {
+      "name": "mini-svs-synthesis",
+      "class_name": "MiniSvsContainer",
+      "image": "../Dockerfile",
+      "image_build_context": "..",
+      "instance_type": "basic",
+      "max_instances": 1,
+      "constraints": {
+        "regions": ["APAC"]
+      }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "SYNTH_CONTAINER",
+        "class_name": "MiniSvsContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["MiniSvsContainer"]
+    }
+  ],
   "routes": [
     {
       "pattern": "mini-svs.com",
