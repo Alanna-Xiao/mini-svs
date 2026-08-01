@@ -22,10 +22,10 @@ Implemented so far:
 - React piano-roll editor with vocal and instrument tracks
 - note creation, selection, movement, resizing, deletion, and lyric editing
 - sample-based vowel synthesis with looping, pitch shifting, and note transitions
-- offline WAV rendering, waveform preview, playback, and stop controls
+- offline vocal and SoundFont instrument WAV rendering, waveform preview, playback, and stop controls
 - backend, frontend, and browser workflow tests
 
-Vocal rendering currently supports the phonemes installed in the selected sample voicebank. Instrument catalogs are available, but instrument-note rendering is not connected yet.
+Vocal rendering supports the phonemes installed in the selected sample voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
 
 Planned first version:
 
@@ -84,6 +84,7 @@ Backend:
 
 ```bash
 brew install rubberband # macOS; install rubberband-cli on Linux
+brew install fluid-synth # macOS; install fluidsynth on Linux
 python3 -m venv .venv
 .venv/bin/python -m pip install -e 'backend[dev]'
 cd backend

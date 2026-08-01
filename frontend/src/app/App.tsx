@@ -15,14 +15,16 @@ export function App() {
   const project = useProjectStore((state) => state.project);
   const setBpm = useProjectStore((state) => state.setBpm);
   const setGrid = useProjectStore((state) => state.setGrid);
+  const activeTrackId = useProjectStore((state) => state.activeTrackId);
   const [status, setStatus] = useState("Ready");
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
   const audioPreview = useRef<AudioPreviewHandle>(null);
 
   const handleRender = async () => {
     setStatus("Rendering...");
+    setOutputUrl(null);
     try {
-      const result = await renderProject(project);
+      const result = await renderProject(project, [activeTrackId]);
       setOutputUrl(`/api${result.outputUrl}`);
       setStatus(`Rendered ${result.metadata.durationSeconds.toFixed(2)} s`);
     } catch (error) {

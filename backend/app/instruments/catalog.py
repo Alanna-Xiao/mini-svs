@@ -32,6 +32,9 @@ class InstrumentCatalog:
         return [entry.summary() for entry in self._read()]
 
     def require(self, instrument_id: str) -> InstrumentSummary:
+        return self.load(instrument_id).summary()
+
+    def load(self, instrument_id: str) -> InstrumentConfigEntry:
         for instrument in self._read() if self.config_path.is_file() else []:
             if instrument.id == instrument_id:
                 if not instrument.path.expanduser().is_file():
@@ -40,7 +43,7 @@ class InstrumentCatalog:
                         f"Configured file for instrument '{instrument_id}' is missing.",
                         details={"instrumentId": instrument_id},
                     )
-                return instrument.summary()
+                return instrument
         raise MiniSvsError(
             "unknown_instrument",
             f"Instrument '{instrument_id}' is not configured.",

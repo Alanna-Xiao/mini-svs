@@ -40,7 +40,11 @@ const initialTracks: Track[] = [
     type: "instrument",
     name: "Piano",
     instrumentId: "musescore_general",
-    notes: [],
+    notes: [
+      { id: "piano_c", type: "instrument", pitch: "C4", start: 0, duration: 8, velocity: 96 },
+      { id: "piano_e", type: "instrument", pitch: "E4", start: 0, duration: 8, velocity: 96 },
+      { id: "piano_g", type: "instrument", pitch: "G4", start: 0, duration: 8, velocity: 96 },
+    ],
   },
 ];
 

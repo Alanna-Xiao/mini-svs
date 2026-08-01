@@ -2,9 +2,9 @@ from typing import List, Optional
 
 import numpy as np
 
-from app.core.errors import MiniSvsError
 from app.engine.sample import SampleEngine
 from app.instruments.catalog import InstrumentCatalog
+from app.instruments.engine import InstrumentEngine
 from app.output.store import OutputStore
 from app.schemas.project import InstrumentTrack, RenderRequest, VocalTrack
 from app.schemas.responses import (
@@ -22,11 +22,13 @@ class RenderCoordinator:
         instruments: InstrumentCatalog,
         outputs: OutputStore,
         sample_engine: Optional[SampleEngine] = None,
+        instrument_engine: Optional[InstrumentEngine] = None,
     ) -> None:
         self.voicebanks = voicebanks
         self.instruments = instruments
         self.outputs = outputs
         self.sample_engine = sample_engine or SampleEngine()
+        self.instrument_engine = instrument_engine or InstrumentEngine()
 
     def render(self, request: RenderRequest) -> RenderResponse:
         selected_ids = set(request.trackIds or [track.id for track in request.tracks])
@@ -45,13 +47,17 @@ class RenderCoordinator:
                 )
                 stems.append(StemMetadata(trackId=track.id, kind="vocal"))
             elif isinstance(track, InstrumentTrack) and track.notes:
-                self.instruments.require(track.instrumentId)
-                raise MiniSvsError(
-                    "instrument_engine_not_ready",
-                    "Instrument rendering has not been connected yet.",
-                    status_code=501,
-                    details={"trackId": track.id},
+                instrument = self.instruments.load(track.instrumentId)
+                buffers.append(
+                    self.instrument_engine.render_track(
+                        track,
+                        instrument,
+                        request.bpm,
+                        request.grid,
+                        request.sampleRate,
+                    )
                 )
+                stems.append(StemMetadata(trackId=track.id, kind="instrument"))
 
         audio = _mix_buffers(buffers, request.sampleRate)
         peak = float(np.max(np.abs(audio))) if audio.size else 0.0

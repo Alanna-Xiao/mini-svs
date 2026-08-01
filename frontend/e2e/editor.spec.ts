@@ -48,3 +48,20 @@ test("rendered vocal audio enables preview controls", async ({ page }) => {
   await play.click();
   await stop.click();
 });
+
+test("piano track renders an instrument stem", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Piano/ }).click();
+
+  const responsePromise = page.waitForResponse(
+    (response) => response.url().endsWith("/api/render") && response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "Render" }).click();
+  const response = await responsePromise;
+  expect(response.ok()).toBe(true);
+  const payload = await response.json();
+
+  expect(payload.metadata.stems).toEqual([{ trackId: "instrument_1", kind: "instrument" }]);
+  await expect(page.locator(".statusbar")).toContainText("Rendered");
+  await expect(page.getByTitle("Play or pause preview")).toBeEnabled();
+});

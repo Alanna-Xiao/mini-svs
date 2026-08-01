@@ -14,11 +14,11 @@ export class ApiError extends Error {
   }
 }
 
-export async function renderProject(project: Project): Promise<RenderResponse> {
+export async function renderProject(project: Project, trackIds?: string[]): Promise<RenderResponse> {
   const response = await fetch("/api/render", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(project),
+    body: JSON.stringify({ ...project, trackIds }),
   });
   if (!response.ok) {
     const payload = (await response.json().catch(() => ({}))) as ApiErrorPayload;
