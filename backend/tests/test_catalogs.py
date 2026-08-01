@@ -69,6 +69,8 @@ def test_instrument_catalog_hides_paths_and_validates_files(tmp_path):
                         "name": "Test Piano",
                         "format": "sf2",
                         "path": str(library),
+                        "bank": 0,
+                        "program": 0,
                     }
                 ]
             }

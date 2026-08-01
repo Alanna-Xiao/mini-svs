@@ -1,8 +1,22 @@
+import pytest
 from fastapi.testclient import TestClient
 
+from app.core.config import get_settings
 from app.main import create_app
 
 client = TestClient(create_app())
+
+
+@pytest.fixture(autouse=True)
+def isolated_asset_paths(tmp_path, monkeypatch):
+    monkeypatch.setenv("MINI_SVS_VOICEBANK_DIR", str(tmp_path / "voicebanks"))
+    monkeypatch.setenv(
+        "MINI_SVS_INSTRUMENT_CONFIG", str(tmp_path / "instruments.json")
+    )
+    monkeypatch.setenv("MINI_SVS_OUTPUT_DIR", str(tmp_path / "outputs"))
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
 
 
 def test_health():

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import List, Literal
 
-from pydantic import BaseModel, ConfigDict, TypeAdapter, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError
 
 from app.core.errors import MiniSvsError
 from app.schemas.responses import InstrumentSummary
@@ -15,6 +15,8 @@ class InstrumentConfigEntry(BaseModel):
     name: str
     format: Literal["sf2", "sf3", "sfz"]
     path: Path
+    bank: int = Field(default=0, ge=0, le=16383)
+    program: int = Field(default=0, ge=0, le=127)
 
     def summary(self) -> InstrumentSummary:
         return InstrumentSummary(id=self.id, name=self.name, format=self.format)
