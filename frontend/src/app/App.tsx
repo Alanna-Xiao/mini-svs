@@ -1,8 +1,8 @@
 import { AudioWaveform, Play, Square } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { renderProject } from "../api/client";
-import { AudioPreview } from "../audio/AudioPreview";
+import { AudioPreview, type AudioPreviewHandle } from "../audio/AudioPreview";
 import { NoteInspector } from "../components/NoteInspector";
 import { TrackList } from "../components/TrackList";
 import { PianoRoll } from "../editor/PianoRoll";
@@ -17,6 +17,7 @@ export function App() {
   const setGrid = useProjectStore((state) => state.setGrid);
   const [status, setStatus] = useState("Ready");
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
+  const audioPreview = useRef<AudioPreviewHandle>(null);
 
   const handleRender = async () => {
     setStatus("Rendering...");
@@ -34,10 +35,20 @@ export function App() {
       <header className="topbar">
         <div className="brand">mini-svs <span>0.1</span></div>
         <div className="transport" aria-label="Transport">
-          <button className="icon-button" title="Play preview" disabled={!outputUrl}>
+          <button
+            className="icon-button"
+            title="Play or pause preview"
+            disabled={!outputUrl}
+            onClick={() => audioPreview.current?.playPause()}
+          >
             <Play size={17} fill="currentColor" aria-hidden="true" />
           </button>
-          <button className="icon-button" title="Stop preview" disabled={!outputUrl}>
+          <button
+            className="icon-button"
+            title="Stop preview"
+            disabled={!outputUrl}
+            onClick={() => audioPreview.current?.stop()}
+          >
             <Square size={15} fill="currentColor" aria-hidden="true" />
           </button>
           <button className="command-button" onClick={handleRender}>
@@ -67,7 +78,7 @@ export function App() {
       </main>
       <footer className="statusbar">
         <span>{status}</span>
-        <AudioPreview url={outputUrl} />
+        <AudioPreview ref={audioPreview} url={outputUrl} />
         <span>{project.sampleRate / 1000} kHz</span>
       </footer>
     </div>

@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -42,3 +44,12 @@ class VoicebankMetadata(BaseModel):
             type=self.type,
             license=self.license,
         )
+
+
+@dataclass(frozen=True)
+class LoadedVoicebank:
+    root: Path
+    metadata: VoicebankMetadata
+
+    def sample_path(self, phoneme: str) -> Path:
+        return (self.root / self.metadata.phonemes[phoneme].sample).resolve()

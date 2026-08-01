@@ -32,3 +32,19 @@ test("frontend proxy reaches the backend health endpoint", async ({ request }) =
   expect(response.ok()).toBe(true);
   await expect(response.json()).resolves.toEqual({ status: "ok", version: "0.1.0" });
 });
+
+test("rendered vocal audio enables preview controls", async ({ page }) => {
+  await page.goto("/");
+  const play = page.getByTitle("Play or pause preview");
+  const stop = page.getByTitle("Stop preview");
+  await expect(play).toBeDisabled();
+  await expect(stop).toBeDisabled();
+
+  await page.getByRole("button", { name: "Render" }).click();
+
+  await expect(page.locator(".statusbar")).toContainText("Rendered 2.00 s");
+  await expect(play).toBeEnabled();
+  await expect(stop).toBeEnabled();
+  await play.click();
+  await stop.click();
+});

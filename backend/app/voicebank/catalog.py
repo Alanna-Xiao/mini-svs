@@ -6,7 +6,7 @@ from pydantic import ValidationError
 
 from app.core.errors import MiniSvsError
 from app.schemas.responses import VoicebankSummary
-from app.voicebank.models import VoicebankMetadata
+from app.voicebank.models import LoadedVoicebank, VoicebankMetadata
 
 
 class VoicebankCatalog:
@@ -55,6 +55,10 @@ class VoicebankCatalog:
                     details={"voicebankId": voicebank_id, "phoneme": phoneme},
                 )
         return metadata
+
+    def load(self, voicebank_id: str) -> LoadedVoicebank:
+        metadata = self.require(voicebank_id)
+        return LoadedVoicebank(root=self.root / voicebank_id, metadata=metadata)
 
     @staticmethod
     def _read(path: Path) -> VoicebankMetadata:

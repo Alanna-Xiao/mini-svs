@@ -21,9 +21,11 @@ Implemented so far:
 - local voicebank and instrument catalog boundaries
 - React piano-roll editor with vocal and instrument tracks
 - note creation, selection, movement, resizing, deletion, and lyric editing
+- sample-based vowel synthesis with looping, pitch shifting, and note transitions
+- offline WAV rendering, waveform preview, playback, and stop controls
 - backend, frontend, and browser workflow tests
 
-The sample synthesis engine is not connected yet, so `/render` currently returns a structured `engine_not_ready` response after validating configured resources.
+Vocal rendering currently supports the phonemes installed in the selected sample voicebank. Instrument catalogs are available, but instrument-note rendering is not connected yet.
 
 Planned first version:
 

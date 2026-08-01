@@ -50,7 +50,9 @@ def list_instruments() -> List[InstrumentSummary]:
 
 @router.post("/render", response_model=RenderResponse)
 def render(request: RenderRequest) -> RenderResponse:
-    coordinator = RenderCoordinator(voicebank_catalog(), instrument_catalog())
+    coordinator = RenderCoordinator(
+        voicebank_catalog(), instrument_catalog(), output_store()
+    )
     return coordinator.render(request)
 
 

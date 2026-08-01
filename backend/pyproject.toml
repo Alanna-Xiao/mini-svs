@@ -9,7 +9,12 @@ description = "Local synthesis API for mini-svs"
 requires-python = ">=3.9"
 dependencies = [
   "fastapi>=0.116,<1",
+  "librosa>=0.11,<1",
+  "numpy>=2,<3",
   "pydantic>=2.11,<3",
+  "PyYAML>=6,<7",
+  "scipy>=1.13,<2",
+  "soundfile>=0.13,<1",
   "uvicorn[standard]>=0.35,<1",
 ]
 
@@ -18,14 +23,9 @@ dev = [
   "httpx>=0.28,<1",
   "pytest>=8.4,<9",
 ]
-audio = [
-  "librosa>=0.11,<1",
-  "numpy>=2,<3",
+instruments = [
   "pretty-midi>=0.2.10,<1",
   "pyfluidsynth>=1.3,<2",
-  "PyYAML>=6,<7",
-  "scipy>=1.13,<2",
-  "soundfile>=0.13,<1",
 ]
 
 [tool.pytest.ini_options]
