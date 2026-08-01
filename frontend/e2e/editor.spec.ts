@@ -65,3 +65,21 @@ test("piano track renders an instrument stem", async ({ page }) => {
   await expect(page.locator(".statusbar")).toContainText("Rendered");
   await expect(page.getByTitle("Play or pause preview")).toBeEnabled();
 });
+
+test("mix combines vocal and piano stems", async ({ page }) => {
+  await page.goto("/");
+  const responsePromise = page.waitForResponse(
+    (response) => response.url().endsWith("/api/render") && response.request().method() === "POST",
+  );
+
+  await page.getByRole("button", { name: "Mix" }).click();
+  const response = await responsePromise;
+  expect(response.ok()).toBe(true);
+  const payload = await response.json();
+
+  expect(payload.metadata.stems).toEqual([
+    { trackId: "vocal_1", kind: "vocal" },
+    { trackId: "instrument_1", kind: "instrument" },
+  ]);
+  await expect(page.locator(".statusbar")).toContainText("Mixed");
+});

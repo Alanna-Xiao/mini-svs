@@ -46,9 +46,11 @@ button { color: inherit; }
 }
 .icon-button { width: 30px; padding: 0; }
 .command-button { gap: 7px; padding: 0 12px; border-color: #158f89; background: #0d756f; font-weight: 650; }
-.icon-button:hover:not(:disabled), .command-button:hover { background: #3a4047; }
-.command-button:hover { background: #108981; }
-.icon-button:disabled { color: #626871; cursor: not-allowed; }
+.mix-button { border-color: #606873; background: #3a4047; }
+.icon-button:hover:not(:disabled), .command-button:hover:not(:disabled) { background: #3a4047; }
+.command-button:hover:not(:disabled) { background: #108981; }
+.mix-button:hover:not(:disabled) { background: #4a525c; }
+.icon-button:disabled, .command-button:disabled { color: #626871; cursor: not-allowed; }
 
 .bpm-control { display: flex; align-items: center; gap: 6px; color: #aeb5bd; font-size: 11px; font-weight: 700; }
 .bpm-control input { width: 58px; height: 27px; border: 1px solid #464b52; border-radius: 3px; color: #f3f4f5; background: #25282d; padding: 0 7px; }

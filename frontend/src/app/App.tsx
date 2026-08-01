@@ -1,4 +1,4 @@
-import { AudioWaveform, Play, Square } from "lucide-react";
+import { AudioWaveform, Layers3, Play, Square } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { renderProject } from "../api/client";
@@ -18,17 +18,22 @@ export function App() {
   const activeTrackId = useProjectStore((state) => state.activeTrackId);
   const [status, setStatus] = useState("Ready");
   const [outputUrl, setOutputUrl] = useState<string | null>(null);
+  const [isRendering, setIsRendering] = useState(false);
   const audioPreview = useRef<AudioPreviewHandle>(null);
 
-  const handleRender = async () => {
-    setStatus("Rendering...");
+  const handleRender = async (trackIds?: string[]) => {
+    const isMix = trackIds === undefined;
+    setStatus(isMix ? "Mixing..." : "Rendering...");
     setOutputUrl(null);
+    setIsRendering(true);
     try {
-      const result = await renderProject(project, [activeTrackId]);
+      const result = await renderProject(project, trackIds);
       setOutputUrl(`/api${result.outputUrl}`);
-      setStatus(`Rendered ${result.metadata.durationSeconds.toFixed(2)} s`);
+      setStatus(`${isMix ? "Mixed" : "Rendered"} ${result.metadata.durationSeconds.toFixed(2)} s`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Render failed");
+    } finally {
+      setIsRendering(false);
     }
   };
 
@@ -53,8 +58,11 @@ export function App() {
           >
             <Square size={15} fill="currentColor" aria-hidden="true" />
           </button>
-          <button className="command-button" onClick={handleRender}>
+          <button className="command-button" disabled={isRendering} onClick={() => handleRender([activeTrackId])}>
             <AudioWaveform size={17} aria-hidden="true" /> Render
+          </button>
+          <button className="command-button mix-button" disabled={isRendering} onClick={() => handleRender()}>
+            <Layers3 size={17} aria-hidden="true" /> Mix
           </button>
         </div>
         <div className="project-controls">

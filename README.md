@@ -101,6 +101,8 @@ npm run dev
 
 Open `http://127.0.0.1:5173`. The Vite development server proxies `/api` requests to the backend at `http://127.0.0.1:8000`.
 
+Select a track and use **Render** to preview that track alone. Use **Mix** to render the vocal and instrument tracks together on the shared timeline.
+
 ## License
 
 Source code is licensed under GPL-3.0. See [LICENSE](./LICENSE).
