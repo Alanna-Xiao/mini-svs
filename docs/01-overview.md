@@ -2,6 +2,15 @@
 
 mini-svs is a singing voice synthesis app for GitHub release. It is intended as a technical demo, not as a commercial product operated by the author.
 
+## Specification Status
+
+- Version: `0.1.0`
+- Status: Frozen
+- Frozen on: `2026-08-01`
+- Baseline tag: `spec-v0.1.0`
+
+Implementation must conform to this baseline. Functional or architectural changes require an explicit spec revision, a version update, and a new spec tag. Editorial corrections that do not change behavior may be committed without changing the spec version.
+
 ## Spec Files
 
 This spec is split by module:

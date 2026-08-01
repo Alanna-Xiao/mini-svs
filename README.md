@@ -12,7 +12,7 @@ Users will create vocal notes in the editor, choose a voicebank, generate audio,
 
 ## Project Status
 
-mini-svs is currently in the specification and early design stage.
+The `0.1.0` specification is frozen. Implementation has not started yet.
 
 Planned first version:
 
