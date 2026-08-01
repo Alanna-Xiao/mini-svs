@@ -103,6 +103,8 @@ Open `http://127.0.0.1:5173`. The Vite development server proxies `/api` request
 
 Select a track and use **Render** to preview that track alone. Use **Mix** to render the vocal and instrument tracks together on the shared timeline.
 
+For batch deletion, hold **Shift**, **Ctrl**, or **Command** while clicking notes, then use the inspector delete button or press **Delete/Backspace**. **Ctrl/Command+A** selects every note in the current track.
+
 ## License
 
 Source code is licensed under GPL-3.0. See [LICENSE](./LICENSE).

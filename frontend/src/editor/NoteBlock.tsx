@@ -59,7 +59,9 @@ export function NoteBlock({ note, selected }: NoteBlockProps) {
 
   const startDrag = (event: React.PointerEvent, mode: DragMode) => {
     event.stopPropagation();
-    selectNote(note.id);
+    const additive = event.shiftKey || event.ctrlKey || event.metaKey;
+    selectNote(note.id, additive);
+    if (additive) return;
     drag.current = {
       mode,
       pointerX: event.clientX,
@@ -80,6 +82,7 @@ export function NoteBlock({ note, selected }: NoteBlockProps) {
       onClick={(event) => event.stopPropagation()}
       role="button"
       tabIndex={0}
+      aria-pressed={selected}
       aria-label={`${note.pitch} ${note.type === "vocal" ? note.lyric : "instrument note"}`}
     >
       <span>{note.type === "vocal" ? note.lyric : note.pitch}</span>

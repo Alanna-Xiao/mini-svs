@@ -83,3 +83,31 @@ test("mix combines vocal and piano stems", async ({ page }) => {
   ]);
   await expect(page.locator(".statusbar")).toContainText("Mixed");
 });
+
+test("multiple notes can be selected and deleted together", async ({ page }) => {
+  await page.goto("/");
+  const notes = page.locator(".note-block");
+  await notes.nth(0).click();
+  await notes.nth(1).click({ modifiers: ["Shift"] });
+
+  await expect(page.getByText("2 notes selected")).toBeVisible();
+  await page.getByRole("button", { name: "Delete 2 Notes" }).click();
+
+  await expect(notes).toHaveCount(1);
+  await expect(page.getByText("No selection")).toBeVisible();
+});
+
+test("keyboard deletion ignores text editing and removes selected notes", async ({ page }) => {
+  await page.goto("/");
+  const notes = page.locator(".note-block");
+  const lyric = page.getByLabel("Lyric");
+  await lyric.fill("ka");
+  await lyric.press("Backspace");
+  await expect(notes).toHaveCount(3);
+
+  await notes.nth(0).click();
+  await notes.nth(1).click({ modifiers: ["Shift"] });
+  await page.keyboard.press("Delete");
+
+  await expect(notes).toHaveCount(1);
+});

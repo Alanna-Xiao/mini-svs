@@ -4,7 +4,11 @@ import { activeTrack, useProjectStore } from "./projectStore";
 
 describe("project store", () => {
   beforeEach(() => {
-    useProjectStore.setState({ activeTrackId: "vocal_1", selectedNoteId: "note_1" });
+    useProjectStore.setState({
+      activeTrackId: "vocal_1",
+      selectedNoteId: "note_1",
+      selectedNoteIds: ["note_1"],
+    });
   });
 
   it("updates the selected note without changing its type", () => {
@@ -20,5 +24,21 @@ describe("project store", () => {
     const track = activeTrack(useProjectStore.getState());
     expect(track.notes.at(-1)).toMatchObject({ id: "new_note", pitch: "D4", start: 12 });
     vi.unstubAllGlobals();
+  });
+
+  it("selects and deletes multiple notes from the active track", () => {
+    const store = useProjectStore.getState();
+    store.selectNote("note_2", true);
+    expect(useProjectStore.getState().selectedNoteIds).toEqual(["note_1", "note_2"]);
+
+    useProjectStore.getState().deleteSelectedNotes();
+
+    expect(activeTrack(useProjectStore.getState()).notes.map((note) => note.id)).not.toContain(
+      "note_1",
+    );
+    expect(activeTrack(useProjectStore.getState()).notes.map((note) => note.id)).not.toContain(
+      "note_2",
+    );
+    expect(useProjectStore.getState().selectedNoteIds).toEqual([]);
   });
 });

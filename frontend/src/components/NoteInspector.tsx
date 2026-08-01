@@ -4,13 +4,21 @@ import { selectedNote, useProjectStore } from "../state/projectStore";
 
 export function NoteInspector() {
   const note = useProjectStore(selectedNote);
+  const selectedCount = useProjectStore((state) => state.selectedNoteIds.length);
   const updateNote = useProjectStore((state) => state.updateNote);
-  const deleteSelectedNote = useProjectStore((state) => state.deleteSelectedNote);
+  const deleteSelectedNotes = useProjectStore((state) => state.deleteSelectedNotes);
 
   return (
     <aside className="note-inspector" aria-label="Note inspector">
       <div className="panel-heading">Note</div>
-      {!note ? (
+      {selectedCount > 1 ? (
+        <div className="bulk-selection">
+          <strong>{selectedCount} notes selected</strong>
+          <button className="danger-button" onClick={deleteSelectedNotes}>
+            <Trash2 size={15} aria-hidden="true" /> Delete {selectedCount} Notes
+          </button>
+        </div>
+      ) : !note ? (
         <div className="empty-inspector">No selection</div>
       ) : (
         <div className="inspector-fields">
@@ -55,7 +63,7 @@ export function NoteInspector() {
               />
             </label>
           )}
-          <button className="danger-button" onClick={deleteSelectedNote}>
+          <button className="danger-button" onClick={deleteSelectedNotes}>
             <Trash2 size={15} aria-hidden="true" /> Delete
           </button>
         </div>

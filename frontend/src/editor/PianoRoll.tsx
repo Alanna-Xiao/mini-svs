@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { activeTrack, useProjectStore } from "../state/projectStore";
 import { CELL_WIDTH, NoteBlock, ROW_HEIGHT } from "./NoteBlock";
@@ -11,15 +11,35 @@ export function PianoRoll() {
   const pitchRulerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const track = useProjectStore(activeTrack);
-  const selectedNoteId = useProjectStore((state) => state.selectedNoteId);
+  const selectedNoteIds = useProjectStore((state) => state.selectedNoteIds);
   const addNote = useProjectStore((state) => state.addNote);
   const selectNote = useProjectStore((state) => state.selectNote);
+  const selectAllNotes = useProjectStore((state) => state.selectAllNotes);
+  const deleteSelectedNotes = useProjectStore((state) => state.deleteSelectedNotes);
 
   useLayoutEffect(() => {
     const initialPitchRegion = Math.max(0, VISIBLE_PITCHES.indexOf("E4") * ROW_HEIGHT);
     if (scrollRef.current) scrollRef.current.scrollTop = initialPitchRegion;
     if (pitchRulerRef.current) pitchRulerRef.current.scrollTop = initialPitchRegion;
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const editing =
+        target?.matches("input, textarea, select") || target?.isContentEditable;
+      if (editing) return;
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a") {
+        event.preventDefault();
+        selectAllNotes();
+      } else if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault();
+        deleteSelectedNotes();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [deleteSelectedNotes, selectAllNotes]);
 
   const addAtPointer = (event: React.MouseEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -65,7 +85,7 @@ export function PianoRoll() {
           onDoubleClick={addAtPointer}
         >
           {track.notes.map((note) => (
-            <NoteBlock key={note.id} note={note} selected={note.id === selectedNoteId} />
+            <NoteBlock key={note.id} note={note} selected={selectedNoteIds.includes(note.id)} />
           ))}
         </div>
       </div>

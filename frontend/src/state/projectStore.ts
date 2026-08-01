@@ -14,13 +14,15 @@ type ProjectState = {
   project: Project;
   activeTrackId: string;
   selectedNoteId: string | null;
+  selectedNoteIds: string[];
   setBpm: (bpm: number) => void;
   setGrid: (grid: GridUnit) => void;
   setActiveTrack: (trackId: string) => void;
-  selectNote: (noteId: string | null) => void;
+  selectNote: (noteId: string | null, additive?: boolean) => void;
+  selectAllNotes: () => void;
   addNote: (pitch: string, start: number) => void;
   updateNote: (noteId: string, patch: NotePatch) => void;
-  deleteSelectedNote: () => void;
+  deleteSelectedNotes: () => void;
 };
 
 const initialTracks: Track[] = [
@@ -66,11 +68,35 @@ export const useProjectStore = create<ProjectState>((set) => ({
   },
   activeTrackId: "vocal_1",
   selectedNoteId: "note_1",
+  selectedNoteIds: ["note_1"],
   setBpm: (bpm) =>
     set((state) => ({ project: { ...state.project, bpm: Math.min(400, Math.max(20, bpm)) } })),
   setGrid: (grid) => set((state) => ({ project: { ...state.project, grid } })),
-  setActiveTrack: (activeTrackId) => set({ activeTrackId, selectedNoteId: null }),
-  selectNote: (selectedNoteId) => set({ selectedNoteId }),
+  setActiveTrack: (activeTrackId) =>
+    set({ activeTrackId, selectedNoteId: null, selectedNoteIds: [] }),
+  selectNote: (noteId, additive = false) =>
+    set((state) => {
+      if (noteId === null) return { selectedNoteId: null, selectedNoteIds: [] };
+      if (!additive) return { selectedNoteId: noteId, selectedNoteIds: [noteId] };
+      const selected = state.selectedNoteIds.includes(noteId);
+      const selectedNoteIds = selected
+        ? state.selectedNoteIds.filter((id) => id !== noteId)
+        : [...state.selectedNoteIds, noteId];
+      return {
+        selectedNoteId: selected
+          ? selectedNoteIds.at(-1) ?? null
+          : noteId,
+        selectedNoteIds,
+      };
+    }),
+  selectAllNotes: () =>
+    set((state) => {
+      const noteIds = activeTrack(state).notes.map((note) => note.id);
+      return {
+        selectedNoteId: noteIds.at(-1) ?? null,
+        selectedNoteIds: noteIds,
+      };
+    }),
   addNote: (pitch, start) =>
     set((state) => {
       const id = crypto.randomUUID();
@@ -86,7 +112,11 @@ export const useProjectStore = create<ProjectState>((set) => ({
           notes: [...track.notes, { id, type: "instrument", pitch, start, duration: 4, velocity: 96 }],
         };
       });
-      return { project: { ...state.project, tracks }, selectedNoteId: id };
+      return {
+        project: { ...state.project, tracks },
+        selectedNoteId: id,
+        selectedNoteIds: [id],
+      };
     }),
   updateNote: (noteId, patch) =>
     set((state) => ({
@@ -100,18 +130,20 @@ export const useProjectStore = create<ProjectState>((set) => ({
         }) as Track),
       },
     })),
-  deleteSelectedNote: () =>
+  deleteSelectedNotes: () =>
     set((state) => {
-      if (!state.selectedNoteId) return state;
+      if (state.selectedNoteIds.length === 0) return state;
+      const selected = new Set(state.selectedNoteIds);
       return {
         project: {
           ...state.project,
           tracks: mapActiveTrack(state.project.tracks, state.activeTrackId, (track) => ({
             ...track,
-            notes: track.notes.filter((note) => note.id !== state.selectedNoteId),
+            notes: track.notes.filter((note) => !selected.has(note.id)),
           }) as Track),
         },
         selectedNoteId: null,
+        selectedNoteIds: [],
       };
     }),
 }));
