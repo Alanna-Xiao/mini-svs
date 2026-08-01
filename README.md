@@ -12,7 +12,18 @@ Users will create vocal notes in the editor, choose a voicebank, generate audio,
 
 ## Project Status
 
-The `0.1.0` specification is frozen. Implementation has not started yet.
+The `0.1.0` specification is frozen. The first implementation baseline is now in development.
+
+Implemented so far:
+
+- modular FastAPI backend with shared project schemas
+- validation for pitches, durations, selected tracks, resource IDs, and output IDs
+- local voicebank and instrument catalog boundaries
+- React piano-roll editor with vocal and instrument tracks
+- note creation, selection, movement, resizing, deletion, and lyric editing
+- backend, frontend, and browser workflow tests
+
+The sample synthesis engine is not connected yet, so `/render` currently returns a structured `engine_not_ready` response after validating configured resources.
 
 Planned first version:
 
@@ -64,6 +75,27 @@ Recommended resources:
 Implementation details are tracked as module-level files in [docs/](docs/).
 
 That folder intentionally contains only numbered module files.
+
+## Development
+
+Backend:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e 'backend[dev]'
+cd backend
+../.venv/bin/uvicorn app.main:app --reload
+```
+
+Frontend, in a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://127.0.0.1:5173`. The Vite development server proxies `/api` requests to the backend at `http://127.0.0.1:8000`.
 
 ## License
 

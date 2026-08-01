@@ -1,0 +1,122 @@
+import { create } from "zustand";
+
+import type { GridUnit, Note, Project, Track } from "../types/project";
+
+type NotePatch = Partial<{
+  pitch: string;
+  start: number;
+  duration: number;
+  lyric: string;
+  velocity: number;
+}>;
+
+type ProjectState = {
+  project: Project;
+  activeTrackId: string;
+  selectedNoteId: string | null;
+  setBpm: (bpm: number) => void;
+  setGrid: (grid: GridUnit) => void;
+  setActiveTrack: (trackId: string) => void;
+  selectNote: (noteId: string | null) => void;
+  addNote: (pitch: string, start: number) => void;
+  updateNote: (noteId: string, patch: NotePatch) => void;
+  deleteSelectedNote: () => void;
+};
+
+const initialTracks: Track[] = [
+  {
+    id: "vocal_1",
+    type: "vocal",
+    name: "Main Vocal",
+    voicebankId: "author_demo",
+    notes: [
+      { id: "note_1", type: "vocal", pitch: "C4", start: 0, duration: 4, lyric: "a" },
+      { id: "note_2", type: "vocal", pitch: "E4", start: 4, duration: 4, lyric: "i" },
+      { id: "note_3", type: "vocal", pitch: "G4", start: 8, duration: 8, lyric: "u" },
+    ],
+  },
+  {
+    id: "instrument_1",
+    type: "instrument",
+    name: "Piano",
+    instrumentId: "musescore_general",
+    notes: [],
+  },
+];
+
+function mapActiveTrack(
+  tracks: Track[],
+  activeTrackId: string,
+  transform: (track: Track) => Track,
+): Track[] {
+  return tracks.map((track) => (track.id === activeTrackId ? transform(track) : track));
+}
+
+export const useProjectStore = create<ProjectState>((set) => ({
+  project: {
+    projectId: "untitled_project",
+    bpm: 120,
+    grid: "1/16",
+    sampleRate: 44100,
+    tracks: initialTracks,
+  },
+  activeTrackId: "vocal_1",
+  selectedNoteId: "note_1",
+  setBpm: (bpm) =>
+    set((state) => ({ project: { ...state.project, bpm: Math.min(400, Math.max(20, bpm)) } })),
+  setGrid: (grid) => set((state) => ({ project: { ...state.project, grid } })),
+  setActiveTrack: (activeTrackId) => set({ activeTrackId, selectedNoteId: null }),
+  selectNote: (selectedNoteId) => set({ selectedNoteId }),
+  addNote: (pitch, start) =>
+    set((state) => {
+      const id = crypto.randomUUID();
+      const tracks = mapActiveTrack(state.project.tracks, state.activeTrackId, (track) => {
+        if (track.type === "vocal") {
+          return {
+            ...track,
+            notes: [...track.notes, { id, type: "vocal", pitch, start, duration: 4, lyric: "a" }],
+          };
+        }
+        return {
+          ...track,
+          notes: [...track.notes, { id, type: "instrument", pitch, start, duration: 4, velocity: 96 }],
+        };
+      });
+      return { project: { ...state.project, tracks }, selectedNoteId: id };
+    }),
+  updateNote: (noteId, patch) =>
+    set((state) => ({
+      project: {
+        ...state.project,
+        tracks: mapActiveTrack(state.project.tracks, state.activeTrackId, (track) => ({
+          ...track,
+          notes: track.notes.map((note) =>
+            note.id === noteId ? ({ ...note, ...patch } as typeof note) : note,
+          ),
+        }) as Track),
+      },
+    })),
+  deleteSelectedNote: () =>
+    set((state) => {
+      if (!state.selectedNoteId) return state;
+      return {
+        project: {
+          ...state.project,
+          tracks: mapActiveTrack(state.project.tracks, state.activeTrackId, (track) => ({
+            ...track,
+            notes: track.notes.filter((note) => note.id !== state.selectedNoteId),
+          }) as Track),
+        },
+        selectedNoteId: null,
+      };
+    }),
+}));
+
+export function activeTrack(state: ProjectState): Track {
+  return state.project.tracks.find((track) => track.id === state.activeTrackId) ?? state.project.tracks[0];
+}
+
+export function selectedNote(state: ProjectState): Note | null {
+  const track = activeTrack(state);
+  return track.notes.find((note) => note.id === state.selectedNoteId) ?? null;
+}
