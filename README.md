@@ -106,6 +106,8 @@ Open `http://127.0.0.1:5173`. The Vite development server proxies `/api` request
 
 Select a track and use **Render** to preview that track alone. Use **Mix** to render the vocal and instrument tracks together on the shared timeline.
 
+Use **Export WAV** to render every track and download the completed mix. The downloaded file uses the project ID as its filename.
+
 Use the microphone-plus and instrument-plus buttons in the track list to add vocal or instrument tracks. Each track has its own resource menu, notes, and delete button. Rename the active track in the Inspector; switching its voicebank or instrument does not overwrite that name. At least one vocal track is always retained.
 
 Use the up and down arrow buttons beside the track name to reorder the active track.

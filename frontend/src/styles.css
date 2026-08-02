@@ -47,9 +47,11 @@ button { color: inherit; }
 .icon-button { width: 30px; padding: 0; }
 .command-button { gap: 7px; padding: 0 12px; border-color: #158f89; background: #0d756f; font-weight: 650; }
 .mix-button { border-color: #606873; background: #3a4047; }
+.export-button { border-color: #9a6a1f; background: #76501a; }
 .icon-button:hover:not(:disabled), .command-button:hover:not(:disabled) { background: #3a4047; }
 .command-button:hover:not(:disabled) { background: #108981; }
 .mix-button:hover:not(:disabled) { background: #4a525c; }
+.export-button:hover:not(:disabled) { background: #8d6120; }
 .icon-button:disabled, .command-button:disabled { color: #626871; cursor: not-allowed; }
 
 .bpm-control { display: flex; align-items: center; gap: 6px; color: #aeb5bd; font-size: 11px; font-weight: 700; }
@@ -158,6 +160,8 @@ button { color: inherit; }
   .topbar { grid-template: 42px 40px / 1fr auto; }
   .brand { grid-column: 1; }
   .transport { grid-column: 2; padding-right: 8px; }
+  .transport .command-button { width: 30px; padding: 0; }
+  .transport .command-button span { display: none; }
   .project-controls { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; padding: 0 8px; border-top: 1px solid #292d32; }
   .workspace { grid-template: 82px minmax(180px, 1fr) 156px / minmax(0, 1fr); }
   .track-list { display: flex; grid-row: 1; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid #0c0d0f; }

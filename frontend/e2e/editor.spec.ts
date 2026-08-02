@@ -51,7 +51,7 @@ test("rendered vocal audio enables preview controls", async ({ page }) => {
 
 test("piano track renders an instrument stem", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Piano/ }).click();
+  await page.getByRole("button", { name: /^2 Piano/ }).click();
 
   const responsePromise = page.waitForResponse(
     (response) => response.url().endsWith("/api/render") && response.request().method() === "POST",
@@ -82,6 +82,17 @@ test("mix combines vocal and piano stems", async ({ page }) => {
     { trackId: "instrument_1", kind: "instrument" },
   ]);
   await expect(page.locator(".statusbar")).toContainText("Mixed");
+});
+
+test("export downloads a mixed WAV file", async ({ page }) => {
+  await page.goto("/");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export WAV" }).click();
+  const download = await downloadPromise;
+
+  expect(download.suggestedFilename()).toBe("untitled_project.wav");
+  await expect(page.locator(".statusbar")).toContainText("Exported untitled_project.wav");
 });
 
 test("multiple notes can be selected and deleted together", async ({ page }) => {

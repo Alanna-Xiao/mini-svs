@@ -1,8 +1,9 @@
-import { AudioWaveform, Layers3, Play, Square } from "lucide-react";
+import { AudioWaveform, Download, Layers3, Play, Square } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { renderProject } from "../api/client";
+import { fetchRenderedAudio, renderProject } from "../api/client";
 import { AudioPreview, type AudioPreviewHandle } from "../audio/AudioPreview";
+import { saveAudioBlob, wavFileName } from "../audio/export";
 import { NoteInspector } from "../components/NoteInspector";
 import { TrackList } from "../components/TrackList";
 import { PianoRoll } from "../editor/PianoRoll";
@@ -37,6 +38,24 @@ export function App() {
     }
   };
 
+  const handleExport = async () => {
+    setStatus("Exporting WAV...");
+    setIsRendering(true);
+    try {
+      const result = await renderProject(project);
+      const url = `/api${result.outputUrl}`;
+      setOutputUrl(url);
+      const audio = await fetchRenderedAudio(result.outputUrl);
+      const fileName = wavFileName(project.projectId);
+      saveAudioBlob(audio, fileName);
+      setStatus(`Exported ${fileName}`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Export failed");
+    } finally {
+      setIsRendering(false);
+    }
+  };
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -58,11 +77,32 @@ export function App() {
           >
             <Square size={15} fill="currentColor" aria-hidden="true" />
           </button>
-          <button className="command-button" disabled={isRendering} onClick={() => handleRender([activeTrackId])}>
-            <AudioWaveform size={17} aria-hidden="true" /> Render
+          <button
+            className="command-button"
+            aria-label="Render"
+            title="Render active track"
+            disabled={isRendering}
+            onClick={() => handleRender([activeTrackId])}
+          >
+            <AudioWaveform size={17} aria-hidden="true" /> <span>Render</span>
           </button>
-          <button className="command-button mix-button" disabled={isRendering} onClick={() => handleRender()}>
-            <Layers3 size={17} aria-hidden="true" /> Mix
+          <button
+            className="command-button mix-button"
+            aria-label="Mix"
+            title="Preview all tracks"
+            disabled={isRendering}
+            onClick={() => handleRender()}
+          >
+            <Layers3 size={17} aria-hidden="true" /> <span>Mix</span>
+          </button>
+          <button
+            className="command-button export-button"
+            aria-label="Export WAV"
+            title="Export all tracks as WAV"
+            disabled={isRendering}
+            onClick={handleExport}
+          >
+            <Download size={17} aria-hidden="true" /> <span>Export WAV</span>
           </button>
         </div>
         <div className="project-controls">

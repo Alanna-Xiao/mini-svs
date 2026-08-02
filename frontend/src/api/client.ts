@@ -51,3 +51,11 @@ export async function renderProject(project: Project, trackIds?: string[]): Prom
   }
   return (await response.json()) as RenderResponse;
 }
+
+export async function fetchRenderedAudio(outputUrl: string): Promise<Blob> {
+  const response = await fetch(`/api${outputUrl}`);
+  if (!response.ok) {
+    throw new ApiError("Could not download rendered audio.", "output_download_failed", response.status);
+  }
+  return response.blob();
+}
