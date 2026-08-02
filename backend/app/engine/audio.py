@@ -7,6 +7,7 @@ import pyrubberband as pyrb
 import soundfile as sf
 
 from app.core.errors import MiniSvsError
+from app.lyrics import lyric_to_phoneme
 from app.schemas.project import VocalNote, pitch_to_midi
 from app.voicebank.models import LoadedVoicebank, PhonemeMetadata
 
@@ -20,13 +21,24 @@ def render_vocal_note(
     next_pitch: Optional[str] = None,
     fade_in_frames: int = 0,
 ) -> np.ndarray:
-    phoneme = note.lyric.strip().lower()
+    entered_lyric = note.lyric.strip()
+    phoneme = entered_lyric.lower()
     sample_metadata = voicebank.metadata.phonemes.get(phoneme)
+    if sample_metadata is None:
+        phoneme = lyric_to_phoneme(entered_lyric)
+        sample_metadata = voicebank.metadata.phonemes.get(phoneme)
     if sample_metadata is None:
         raise MiniSvsError(
             "unsupported_phoneme",
-            f"Voicebank '{voicebank.metadata.id}' does not contain phoneme '{phoneme}'.",
-            details={"voicebankId": voicebank.metadata.id, "phoneme": phoneme},
+            (
+                f"Lyric '{entered_lyric}' resolves to phoneme '{phoneme}', but voicebank "
+                f"'{voicebank.metadata.id}' does not contain that phoneme."
+            ),
+            details={
+                "voicebankId": voicebank.metadata.id,
+                "lyric": entered_lyric,
+                "phoneme": phoneme,
+            },
         )
 
     sample = _load_sample(voicebank.sample_path(phoneme), sample_rate)

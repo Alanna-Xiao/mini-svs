@@ -26,7 +26,7 @@ Implemented so far:
 - Cloudflare Worker gateway and container-ready Python synthesis service
 - backend, frontend, and browser workflow tests
 
-Vocal rendering supports the phonemes installed in the selected sample voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
+Vocal lyrics accept romaji, hiragana, katakana, and kanji. Japanese text is converted to a romaji phoneme key before the selected voicebank is queried. Each note should contain one mora or syllable, and the resolved phoneme must have a sample in the voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
 
 The bundled MuseScore General configuration exposes eight selectable presets from the same local SoundFont: acoustic grand piano, nylon guitar, acoustic bass, violin, string ensemble, trumpet, alto saxophone, and flute. Projects can add multiple independent instrument tracks, each with its own notes and General MIDI program, without duplicating the SoundFont file.
 

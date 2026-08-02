@@ -13,6 +13,7 @@ dependencies = [
   "numpy>=2,<3",
   "pydantic>=2.11,<3",
   "pretty-midi>=0.2.10,<1",
+  "pykakasi>=2.3,<3",
   "pyrubberband>=0.4,<1",
   "PyYAML>=6,<7",
   "scipy>=1.13,<2",

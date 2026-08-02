@@ -86,6 +86,58 @@ def test_engine_rejects_phonemes_missing_from_voicebank(tmp_path):
             vocal_track([note]), make_voicebank(tmp_path), 120, "1/16", 44100
         )
     assert error.value.code == "unsupported_phoneme"
+    assert error.value.details == {
+        "voicebankId": "test_voice",
+        "lyric": "i",
+        "phoneme": "i",
+    }
+
+
+@pytest.mark.parametrize("lyric", ["あ", "ア"])
+def test_engine_resolves_kana_lyrics_to_voicebank_phonemes(tmp_path, lyric):
+    note = VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=4, lyric=lyric)
+
+    audio = SampleEngine().render_track(
+        vocal_track([note]), make_voicebank(tmp_path), 120, "1/16", 44100
+    )
+
+    assert audio.size == 22050
+    assert np.max(np.abs(audio)) > 0
+
+
+def test_engine_resolves_kanji_lyrics_to_voicebank_phonemes(tmp_path):
+    note = VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=4, lyric="絵")
+
+    audio = SampleEngine().render_track(
+        vocal_track([note]), make_voicebank(tmp_path, phonemes=("e",)), 120, "1/16", 44100
+    )
+
+    assert audio.size == 22050
+    assert np.max(np.abs(audio)) > 0
+
+
+def test_engine_prefers_a_voicebank_native_kana_key(tmp_path):
+    note = VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=4, lyric="あ")
+
+    audio = SampleEngine().render_track(
+        vocal_track([note]), make_voicebank(tmp_path, phonemes=("あ",)), 120, "1/16", 44100
+    )
+
+    assert audio.size == 22050
+    assert np.max(np.abs(audio)) > 0
+
+
+def test_engine_reports_resolved_phoneme_when_voicebank_sample_is_missing(tmp_path):
+    note = VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=4, lyric="か")
+
+    with pytest.raises(MiniSvsError) as error:
+        SampleEngine().render_track(
+            vocal_track([note]), make_voicebank(tmp_path), 120, "1/16", 44100
+        )
+
+    assert error.value.code == "unsupported_phoneme"
+    assert error.value.details["lyric"] == "か"
+    assert error.value.details["phoneme"] == "ka"
 
 
 def test_engine_limits_gain_for_quiet_recordings(tmp_path):

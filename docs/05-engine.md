@@ -15,6 +15,7 @@ The engine owns synthesis behavior.
 ## Required Behavior
 
 - Convert piano-roll notes into render tasks.
+- Resolve romaji, hiragana, katakana, and kanji lyrics to voicebank phoneme keys.
 - Ask the voicebank for the correct sample or model data.
 - Match sample duration to target note duration.
 - Shift pitch to target note.
@@ -117,5 +118,6 @@ Future improvements:
 
 - Missing voicebank sample: fail the render with a structured error.
 - Unsupported lyric or phoneme: use a configured fallback phoneme if available, otherwise fail validation.
+- A Japanese lyric is romanized before lookup; the error includes both the entered lyric and resolved phoneme when its sample is missing.
 - Invalid loop points: fail voicebank validation before rendering.
 - Clipping after mix/render: report `clipped: true`; output may normalize according to output settings.
