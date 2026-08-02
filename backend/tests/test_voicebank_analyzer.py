@@ -65,3 +65,27 @@ def test_analyzer_removes_a_long_low_level_preamble(tmp_path):
 
     assert processed.size / sample_rate < 1.8
     assert analysis.attack_ms >= 120
+
+
+def test_analyzer_prefers_loop_points_with_matching_endpoint_levels(tmp_path):
+    sample_rate = 44100
+    time = np.arange(round(2.4 * sample_rate), dtype=np.float32) / sample_rate
+    envelope = 0.24 + 0.08 * np.sin(2 * np.pi * 0.8 * time)
+    voice = envelope * np.sin(2 * np.pi * 220.0 * time)
+    source = tmp_path / "yu.wav"
+    sf.write(source, voice, sample_rate)
+
+    processed, analysis = analyze_sample(source, "yu")
+    start = round(analysis.loop_start_ms * sample_rate / 1000)
+    end = round(analysis.loop_end_ms * sample_rate / 1000)
+    edge = round(0.06 * sample_rate)
+    start_rms = np.sqrt(np.mean(np.square(processed[start : start + edge])))
+    end_rms = np.sqrt(np.mean(np.square(processed[end - edge : end])))
+    endpoint_delta_db = abs(20 * np.log10(end_rms / start_rms))
+    overlap = round(0.02 * sample_rate)
+    waveform_correlation = np.corrcoef(
+        processed[start : start + overlap], processed[end - overlap : end]
+    )[0, 1]
+
+    assert endpoint_delta_db < 1.0
+    assert waveform_correlation > 0.5

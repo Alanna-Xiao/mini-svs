@@ -14,8 +14,8 @@ class PhonemeMetadata(BaseModel):
     sample: str = Field(min_length=1)
     base_pitch: str = Field(alias="basePitch")
     attack_ms: int = Field(alias="attackMs", ge=0)
-    loop_start_ms: int = Field(alias="loopStartMs", ge=0)
-    loop_end_ms: int = Field(alias="loopEndMs", gt=0)
+    loop_start_ms: float = Field(alias="loopStartMs", ge=0)
+    loop_end_ms: float = Field(alias="loopEndMs", gt=0)
     release_ms: int = Field(alias="releaseMs", ge=0)
 
     @model_validator(mode="after")

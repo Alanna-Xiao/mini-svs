@@ -21,8 +21,8 @@ class SampleAnalysis:
     snr_db: float
     voiced_start_ms: int
     voiced_end_ms: int
-    loop_start_ms: int
-    loop_end_ms: int
+    loop_start_ms: float
+    loop_end_ms: float
     attack_ms: int
     release_ms: int
     warnings: List[str]
@@ -146,8 +146,8 @@ def analyze_sample(
         snr_db=round(snr_db, 2),
         voiced_start_ms=round(voiced_start_seconds * 1000),
         voiced_end_ms=round(voiced_end_seconds * 1000),
-        loop_start_ms=round(loop_start * 1000),
-        loop_end_ms=round(loop_end * 1000),
+        loop_start_ms=round(loop_start * 1000, 3),
+        loop_end_ms=round(loop_end * 1000, 3),
         attack_ms=_recommended_attack_ms(phoneme, times, valid),
         release_ms=120,
         warnings=warnings,
@@ -221,7 +221,7 @@ def _find_stable_loop(
     )[0]
     frame_count = min(len(f0), len(rms))
     window_frames = max(8, round(0.5 * sample_rate / hop_length))
-    margin = min(0.35, max(0.15, (voiced_end - voiced_start) * 0.18))
+    margin = min(0.25, max(0.12, (voiced_end - voiced_start) * 0.12))
     candidate_start = voiced_start + margin
     candidate_end = voiced_end - margin
     best = None
@@ -236,7 +236,27 @@ def _find_stable_loop(
         cents = (librosa.hz_to_midi(f0[start:end][window_valid]) - detected_midi) * 100
         rms_window = np.maximum(rms[start:end][window_valid], 1e-9)
         rms_db = librosa.amplitude_to_db(rms_window, ref=np.max)
-        score = float(np.std(cents) + 0.7 * np.std(rms_db))
+        edge_frames = max(2, len(rms_db) // 8)
+        endpoint_level_delta = abs(
+            float(np.mean(rms_db[:edge_frames]) - np.mean(rms_db[-edge_frames:]))
+        )
+        loop_start_frame = round(float(times[start]) * sample_rate)
+        loop_end_frame = round(float(times[end - 1]) * sample_rate)
+        overlap_frames = min(
+            round(sample_rate * 0.02),
+            max(1, (loop_end_frame - loop_start_frame) // 4),
+        )
+        loop_head = audio[loop_start_frame : loop_start_frame + overlap_frames]
+        loop_tail = audio[loop_end_frame - overlap_frames : loop_end_frame]
+        waveform_correlation = float(np.corrcoef(loop_head, loop_tail)[0, 1])
+        if not np.isfinite(waveform_correlation):
+            waveform_correlation = 0.0
+        score = float(
+            np.std(cents)
+            + 0.7 * np.std(rms_db)
+            + 2.0 * endpoint_level_delta
+            + 5.0 * (1.0 - waveform_correlation)
+        )
         if best is None or score < best[0]:
             best = (score, start, end)
 
