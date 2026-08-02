@@ -50,3 +50,18 @@ def test_analyzer_preserves_a_longer_consonant_attack(tmp_path):
     _, analysis = analyze_sample(source, "shi")
 
     assert analysis.attack_ms >= 180
+
+
+def test_analyzer_removes_a_long_low_level_preamble(tmp_path):
+    sample_rate = 44100
+    quiet_time = np.arange(round(0.8 * sample_rate), dtype=np.float32) / sample_rate
+    voice_time = np.arange(round(1.5 * sample_rate), dtype=np.float32) / sample_rate
+    quiet_preamble = 0.01 * np.sin(2 * np.pi * 208.0 * quiet_time)
+    voice = 0.35 * np.sin(2 * np.pi * 208.0 * voice_time)
+    source = tmp_path / "yu.wav"
+    sf.write(source, np.concatenate([quiet_preamble, voice]), sample_rate)
+
+    processed, analysis = analyze_sample(source, "yu")
+
+    assert processed.size / sample_rate < 1.8
+    assert analysis.attack_ms >= 120

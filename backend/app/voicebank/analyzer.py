@@ -54,8 +54,11 @@ def analyze_sample(
     padding_after = int(0.12 * sample_rate)
     trim_start = max(0, int(active_start) - padding_before)
     trim_end = min(audio.size, int(active_end) + padding_after)
+    trim_start = _refine_trim_start(
+        audio, trim_start, trim_end, phoneme, sample_rate
+    )
     processed = np.asarray(audio[trim_start:trim_end], dtype=np.float32)
-    voiced_start_seconds = (active_start - trim_start) / sample_rate
+    voiced_start_seconds = max(0.0, (active_start - trim_start) / sample_rate)
     voiced_end_seconds = (active_end - trim_start) / sample_rate
 
     hop_length = 256
@@ -109,7 +112,11 @@ def analyze_sample(
             processed[min(processed.size, int(voiced_end_seconds * sample_rate)) :],
         ]
     )
-    voice_rms = float(np.sqrt(np.mean(np.square(processed[active_start - trim_start : active_end - trim_start]))))
+    voice_start_frame = max(0, int(active_start) - trim_start)
+    voice_end_frame = min(processed.size, int(active_end) - trim_start)
+    voice_rms = float(
+        np.sqrt(np.mean(np.square(processed[voice_start_frame:voice_end_frame])))
+    )
     noise_rms = float(np.sqrt(np.mean(np.square(noise)))) if noise.size else 1e-9
     snr_db = float(20.0 * np.log10(max(voice_rms, 1e-9) / max(noise_rms, 1e-9)))
 
@@ -149,23 +156,53 @@ def analyze_sample(
 
 
 def _recommended_attack_ms(phoneme: str, times: np.ndarray, valid: np.ndarray) -> int:
-    if phoneme in {"a", "i", "u", "e", "o"}:
-        return 40
-    if phoneme == "n":
-        return 80
+    minimum_ms = _minimum_attack_ms(phoneme)
+    if phoneme in {"a", "i", "u", "e", "o", "n"}:
+        return minimum_ms
 
     first_voiced_ms = 0
     valid_frames = np.flatnonzero(valid)
     if valid_frames.size:
         first_voiced_ms = round(float(times[valid_frames[0]]) * 1000)
 
-    if phoneme.startswith(("s", "sh", "h", "f")):
-        minimum_ms = 180
-    elif phoneme in {"chi", "tsu"}:
-        minimum_ms = 160
-    else:
-        minimum_ms = 120
     return min(300, max(minimum_ms, first_voiced_ms + 40))
+
+
+def _minimum_attack_ms(phoneme: str) -> int:
+    if phoneme in {"a", "i", "u", "e", "o"}:
+        return 40
+    if phoneme == "n":
+        return 80
+    if phoneme.startswith(("s", "sh", "h", "f")):
+        return 180
+    if phoneme in {"chi", "tsu"}:
+        return 160
+    return 120
+
+
+def _refine_trim_start(
+    audio: np.ndarray,
+    trim_start: int,
+    trim_end: int,
+    phoneme: str,
+    sample_rate: int,
+) -> int:
+    region = audio[trim_start:trim_end]
+    frame_length = 1024
+    hop_length = 128
+    if region.size < frame_length:
+        return trim_start
+
+    rms = librosa.feature.rms(
+        y=region, frame_length=frame_length, hop_length=hop_length, center=False
+    )[0]
+    clear_voice = np.flatnonzero(rms >= float(np.max(rms)) * 0.1)
+    if not clear_voice.size:
+        return trim_start
+
+    clear_start = trim_start + int(clear_voice[0]) * hop_length
+    pre_roll = round(_minimum_attack_ms(phoneme) * sample_rate / 1000)
+    return max(trim_start, clear_start - pre_roll)
 
 
 def _find_stable_loop(
