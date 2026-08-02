@@ -87,7 +87,11 @@ export function NoteInspector() {
           {note.type === "vocal" ? (
             <label>
               Lyric
-              <input value={note.lyric} onChange={(event) => updateNote(note.id, { lyric: event.target.value })} />
+              <input
+                maxLength={32}
+                value={note.lyric}
+                onChange={(event) => updateNote(note.id, { lyric: event.target.value })}
+              />
             </label>
           ) : (
             <label>

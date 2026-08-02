@@ -49,6 +49,16 @@ test("rendered vocal audio enables preview controls", async ({ page }) => {
   await stop.click();
 });
 
+test("one vocal note can render multiple kana", async ({ page }) => {
+  await page.goto("/");
+  await page.getByLabel("Lyric").fill("かな");
+
+  await page.getByRole("button", { name: "Render" }).click();
+
+  await expect(page.locator(".statusbar")).toContainText("Rendered 2.00 s");
+  await expect(page.getByTitle("Play or pause preview")).toBeEnabled();
+});
+
 test("piano track renders an instrument stem", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /^2 Piano/ }).click();

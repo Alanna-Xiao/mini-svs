@@ -7,7 +7,7 @@ import pyrubberband as pyrb
 import soundfile as sf
 
 from app.core.errors import MiniSvsError
-from app.lyrics import lyric_to_phoneme
+from app.lyrics import lyric_to_phonemes
 from app.schemas.project import VocalNote, pitch_to_midi
 from app.voicebank.models import LoadedVoicebank, PhonemeMetadata
 
@@ -22,28 +22,90 @@ def render_vocal_note(
     fade_in_frames: int = 0,
 ) -> np.ndarray:
     entered_lyric = note.lyric.strip()
-    phoneme = entered_lyric.lower()
-    sample_metadata = voicebank.metadata.phonemes.get(phoneme)
-    if sample_metadata is None:
-        phoneme = lyric_to_phoneme(entered_lyric)
-        sample_metadata = voicebank.metadata.phonemes.get(phoneme)
-    if sample_metadata is None:
+    direct_phoneme = entered_lyric.lower()
+    if direct_phoneme in voicebank.metadata.phonemes:
+        phonemes = (direct_phoneme,)
+    else:
+        phonemes = lyric_to_phonemes(entered_lyric)
+    missing_phonemes = tuple(
+        phoneme for phoneme in phonemes if phoneme not in voicebank.metadata.phonemes
+    )
+    if not phonemes or missing_phonemes:
+        resolved = ", ".join(phonemes) or "(empty)"
+        missing = ", ".join(missing_phonemes) or resolved
+        details = {
+            "voicebankId": voicebank.metadata.id,
+            "lyric": entered_lyric,
+            "phoneme": missing_phonemes[0] if len(missing_phonemes) == 1 else resolved,
+        }
+        if len(phonemes) > 1:
+            details.update(
+                {
+                    "phonemes": list(phonemes),
+                    "missingPhonemes": list(missing_phonemes),
+                }
+            )
         raise MiniSvsError(
             "unsupported_phoneme",
             (
-                f"Lyric '{entered_lyric}' resolves to phoneme '{phoneme}', but voicebank "
-                f"'{voicebank.metadata.id}' does not contain that phoneme."
+                f"Lyric '{entered_lyric}' resolves to phonemes '{resolved}', but voicebank "
+                f"'{voicebank.metadata.id}' does not contain: {missing}."
             ),
-            details={
-                "voicebankId": voicebank.metadata.id,
-                "lyric": entered_lyric,
-                "phoneme": phoneme,
-            },
+            details=details,
         )
 
-    sample = _load_sample(voicebank.sample_path(phoneme), sample_rate)
     total_frames = max(1, duration_frames + transition_frames)
-    sustained = _match_duration(sample, sample_metadata, total_frames, sample_rate)
+    internal_crossfade = min(
+        round(sample_rate * 0.015),
+        total_frames // max(1, len(phonemes) * 4),
+    )
+    render_budget = total_frames + internal_crossfade * (len(phonemes) - 1)
+    segment_frames = _divide_frames(render_budget, len(phonemes))
+    rendered_segments = []
+    for index, (phoneme, frames) in enumerate(zip(phonemes, segment_frames)):
+        rendered_segments.append(
+            _render_phoneme(
+                phoneme,
+                note,
+                voicebank,
+                frames,
+                sample_rate,
+                transition_frames=(
+                    transition_frames if index == len(phonemes) - 1 else 0
+                ),
+                next_pitch=(next_pitch if index == len(phonemes) - 1 else None),
+                fade_in_frames=(fade_in_frames if index == 0 else 0),
+                fade_start=index == 0,
+                fade_end=index == len(phonemes) - 1,
+            )
+        )
+
+    rendered = rendered_segments[0]
+    for segment in rendered_segments[1:]:
+        rendered = _append_crossfade(rendered, segment, internal_crossfade)
+    rendered = _pad_to_length(rendered, total_frames)
+
+    peak = float(np.max(np.abs(rendered)))
+    if peak > 0:
+        rendered *= min(4.0, 0.65 / peak)
+    return np.asarray(rendered, dtype=np.float32)
+
+
+def _render_phoneme(
+    phoneme: str,
+    note: VocalNote,
+    voicebank: LoadedVoicebank,
+    target_frames: int,
+    sample_rate: int,
+    transition_frames: int = 0,
+    next_pitch: Optional[str] = None,
+    fade_in_frames: int = 0,
+    fade_start: bool = True,
+    fade_end: bool = True,
+) -> np.ndarray:
+    sample_metadata = voicebank.metadata.phonemes[phoneme]
+    sample = _load_sample(voicebank.sample_path(phoneme), sample_rate)
+    sustained = _match_duration(sample, sample_metadata, max(1, target_frames), sample_rate)
     current_steps = pitch_to_midi(note.pitch) - pitch_to_midi(sample_metadata.base_pitch)
     rendered = _pitch_shift(sustained, sample_rate, current_steps)
 
@@ -62,14 +124,16 @@ def render_vocal_note(
 
     edge_frames = min(max(1, round(sample_rate * 0.005)), rendered.size // 2)
     if edge_frames:
-        rendered[:edge_frames] *= np.linspace(0.0, 1.0, edge_frames, dtype=np.float32)
-        if transition_frames == 0:
+        if fade_start:
+            rendered[:edge_frames] *= np.linspace(0.0, 1.0, edge_frames, dtype=np.float32)
+        if fade_end and transition_frames == 0:
             rendered[-edge_frames:] *= np.linspace(1.0, 0.0, edge_frames, dtype=np.float32)
-
-    peak = float(np.max(np.abs(rendered)))
-    if peak > 0:
-        rendered *= min(4.0, 0.65 / peak)
     return np.asarray(rendered, dtype=np.float32)
+
+
+def _divide_frames(total_frames: int, parts: int) -> list[int]:
+    base, remainder = divmod(total_frames, parts)
+    return [base + (1 if index < remainder else 0) for index in range(parts)]
 
 
 def _load_sample(path, sample_rate: int) -> np.ndarray:

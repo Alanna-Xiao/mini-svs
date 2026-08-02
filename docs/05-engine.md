@@ -16,6 +16,7 @@ The engine owns synthesis behavior.
 
 - Convert piano-roll notes into render tasks.
 - Resolve romaji, hiragana, katakana, and kanji lyrics to voicebank phoneme keys.
+- Split multi-mora lyrics within one note, divide the note duration across their phonemes, and crossfade internal boundaries.
 - Ask the voicebank for the correct sample or model data.
 - Match sample duration to target note duration.
 - Shift pitch to target note.

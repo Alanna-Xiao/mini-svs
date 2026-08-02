@@ -117,6 +117,37 @@ def test_engine_resolves_kanji_lyrics_to_voicebank_phonemes(tmp_path):
     assert np.max(np.abs(audio)) > 0
 
 
+def test_engine_renders_multiple_kana_inside_one_note(tmp_path):
+    note = VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=8, lyric="かな")
+
+    audio = SampleEngine().render_track(
+        vocal_track([note]),
+        make_voicebank(tmp_path, phonemes=("ka", "na")),
+        120,
+        "1/16",
+        44100,
+    )
+
+    assert audio.size == 44100
+    assert np.max(np.abs(audio)) > 0
+
+
+def test_engine_reports_missing_phonemes_from_a_multi_kana_lyric(tmp_path):
+    note = VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=8, lyric="かな")
+
+    with pytest.raises(MiniSvsError) as error:
+        SampleEngine().render_track(
+            vocal_track([note]),
+            make_voicebank(tmp_path, phonemes=("ka",)),
+            120,
+            "1/16",
+            44100,
+        )
+
+    assert error.value.details["phonemes"] == ["ka", "na"]
+    assert error.value.details["missingPhonemes"] == ["na"]
+
+
 def test_engine_prefers_a_voicebank_native_kana_key(tmp_path):
     note = VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=4, lyric="あ")
 
