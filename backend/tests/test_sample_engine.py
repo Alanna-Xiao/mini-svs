@@ -3,9 +3,10 @@ import pytest
 import soundfile as sf
 
 from app.core.errors import MiniSvsError
+from app.engine.audio import _match_duration
 from app.engine.sample import SampleEngine, ticks_to_seconds
 from app.schemas.project import VocalNote, VocalTrack
-from app.voicebank.models import LoadedVoicebank, VoicebankMetadata
+from app.voicebank.models import LoadedVoicebank, PhonemeMetadata, VoicebankMetadata
 
 
 def make_voicebank(tmp_path, phonemes=("a",)) -> LoadedVoicebank:
@@ -152,3 +153,27 @@ def test_engine_limits_gain_for_quiet_recordings(tmp_path):
     )
 
     assert np.max(np.abs(audio)) < 0.02
+
+
+def test_duration_matching_preserves_the_configured_consonant_attack():
+    sample_rate = 1000
+    attack = np.linspace(-0.2, 0.2, 200, dtype=np.float32)
+    gap = np.full(200, 0.3, dtype=np.float32)
+    sustain = np.full(400, 0.6, dtype=np.float32)
+    release = np.linspace(0.2, 0.0, 200, dtype=np.float32)
+    sample = np.concatenate([attack, gap, sustain, release])
+    metadata = PhonemeMetadata.model_validate(
+        {
+            "sample": "samples/ka.wav",
+            "basePitch": "A3",
+            "attackMs": 180,
+            "loopStartMs": 400,
+            "loopEndMs": 800,
+            "releaseMs": 100,
+        }
+    )
+
+    rendered = _match_duration(sample, metadata, 500, sample_rate)
+
+    assert rendered.size == 500
+    assert rendered[150] == pytest.approx(attack[150])

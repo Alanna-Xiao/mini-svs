@@ -109,10 +109,15 @@ def _match_duration(
             details={"loopStartMs": metadata.loop_start_ms, "loopEndMs": metadata.loop_end_ms},
         )
 
-    attack_frames = min(
-        round(metadata.attack_ms * sample_rate / 1000), max(1, target_frames // 4)
-    )
     release_frames = min(release_frames, max(1, target_frames // 4))
+    minimum_sustain_frames = min(
+        round(sample_rate * 0.08), max(1, target_frames // 5)
+    )
+    attack_frames = min(
+        loop_start,
+        round(metadata.attack_ms * sample_rate / 1000),
+        max(1, target_frames - release_frames - minimum_sustain_frames),
+    )
     attack = sample[:attack_frames]
     sustain = sample[loop_start:loop_end]
     release = sample[-release_frames:]

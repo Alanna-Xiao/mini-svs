@@ -141,11 +141,31 @@ def analyze_sample(
         voiced_end_ms=round(voiced_end_seconds * 1000),
         loop_start_ms=round(loop_start * 1000),
         loop_end_ms=round(loop_end * 1000),
-        attack_ms=min(80, max(20, round(voiced_start_seconds * 1000 + 30))),
+        attack_ms=_recommended_attack_ms(phoneme, times, valid),
         release_ms=120,
         warnings=warnings,
     )
     return processed, analysis
+
+
+def _recommended_attack_ms(phoneme: str, times: np.ndarray, valid: np.ndarray) -> int:
+    if phoneme in {"a", "i", "u", "e", "o"}:
+        return 40
+    if phoneme == "n":
+        return 80
+
+    first_voiced_ms = 0
+    valid_frames = np.flatnonzero(valid)
+    if valid_frames.size:
+        first_voiced_ms = round(float(times[valid_frames[0]]) * 1000)
+
+    if phoneme.startswith(("s", "sh", "h", "f")):
+        minimum_ms = 180
+    elif phoneme in {"chi", "tsu"}:
+        minimum_ms = 160
+    else:
+        minimum_ms = 120
+    return min(300, max(minimum_ms, first_voiced_ms + 40))
 
 
 def _find_stable_loop(

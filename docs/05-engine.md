@@ -72,7 +72,7 @@ Recorded voice samples must be extended into sustained notes.
 
 MVP algorithm:
 
-1. Split the sample into `attack`, `sustain`, and `release` using voicebank metadata.
+1. Split the sample into `attack`, `sustain`, and `release` using voicebank metadata. The protected attack must include the consonant onset before the vowel loop.
 2. Loop the `sustain` region until the target duration is reached.
 3. Crossfade each loop boundary to avoid clicks.
 4. Trim or pad to the exact note duration.
