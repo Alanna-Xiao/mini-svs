@@ -1,7 +1,7 @@
 import numpy as np
 import soundfile as sf
 
-from app.voicebank.analyzer import analyze_sample
+from app.voicebank.analyzer import _clear_voice_onset_ms, analyze_sample
 
 
 def test_analyzer_detects_pitch_and_builds_stable_loop(tmp_path):
@@ -47,9 +47,9 @@ def test_analyzer_preserves_a_longer_consonant_attack(tmp_path):
     source = tmp_path / "shi.wav"
     sf.write(source, np.concatenate([noise, voice]), sample_rate)
 
-    _, analysis = analyze_sample(source, "shi")
+    processed, analysis = analyze_sample(source, "shi")
 
-    assert analysis.attack_ms >= 180
+    assert analysis.attack_ms >= _clear_voice_onset_ms(processed, sample_rate) + 60
 
 
 def test_analyzer_removes_a_long_low_level_preamble(tmp_path):

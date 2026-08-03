@@ -148,14 +148,22 @@ def analyze_sample(
         voiced_end_ms=round(voiced_end_seconds * 1000),
         loop_start_ms=round(loop_start * 1000, 3),
         loop_end_ms=round(loop_end * 1000, 3),
-        attack_ms=_recommended_attack_ms(phoneme, times, valid),
+        attack_ms=_recommended_attack_ms(
+            phoneme, times, valid, processed, sample_rate
+        ),
         release_ms=120,
         warnings=warnings,
     )
     return processed, analysis
 
 
-def _recommended_attack_ms(phoneme: str, times: np.ndarray, valid: np.ndarray) -> int:
+def _recommended_attack_ms(
+    phoneme: str,
+    times: np.ndarray,
+    valid: np.ndarray,
+    audio: np.ndarray,
+    sample_rate: int,
+) -> int:
     minimum_ms = _minimum_attack_ms(phoneme)
     if phoneme in {"a", "i", "u", "e", "o", "n"}:
         return minimum_ms
@@ -165,7 +173,8 @@ def _recommended_attack_ms(phoneme: str, times: np.ndarray, valid: np.ndarray) -
     if valid_frames.size:
         first_voiced_ms = round(float(times[valid_frames[0]]) * 1000)
 
-    return min(300, max(minimum_ms, first_voiced_ms + 40))
+    clear_voice_ms = _clear_voice_onset_ms(audio, sample_rate)
+    return min(300, max(minimum_ms, first_voiced_ms + 40, clear_voice_ms + 60))
 
 
 def _minimum_attack_ms(phoneme: str) -> int:
@@ -203,6 +212,20 @@ def _refine_trim_start(
     clear_start = trim_start + int(clear_voice[0]) * hop_length
     pre_roll = round(_minimum_attack_ms(phoneme) * sample_rate / 1000)
     return max(trim_start, clear_start - pre_roll)
+
+
+def _clear_voice_onset_ms(audio: np.ndarray, sample_rate: int) -> int:
+    frame_length = 1024
+    hop_length = 128
+    if audio.size < frame_length:
+        return 0
+    rms = librosa.feature.rms(
+        y=audio, frame_length=frame_length, hop_length=hop_length, center=False
+    )[0]
+    clear_voice = np.flatnonzero(rms >= float(np.max(rms)) * 0.1)
+    if not clear_voice.size:
+        return 0
+    return round(int(clear_voice[0]) * hop_length * 1000 / sample_rate)
 
 
 def _find_stable_loop(
