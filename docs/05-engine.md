@@ -94,6 +94,7 @@ Required behavior:
 - Preserve consonant clarity at syllable starts.
 - Avoid doubling volume during overlaps.
 - Avoid clicks at note boundaries.
+- Use longer equal-power crossfades for vowel onsets and shorter crossfades for consonant onsets so articulation remains clear.
 
 Recommended MVP transition settings:
 

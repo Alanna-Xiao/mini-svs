@@ -4,7 +4,12 @@ import soundfile as sf
 
 from app.core.errors import MiniSvsError
 from app.engine.audio import _match_duration
-from app.engine.sample import SampleEngine, ticks_to_seconds
+from app.engine.sample import (
+    SampleEngine,
+    TransitionSettings,
+    _transition_crossfade_frames,
+    ticks_to_seconds,
+)
 from app.schemas.project import VocalNote, VocalTrack
 from app.voicebank.models import LoadedVoicebank, PhonemeMetadata, VoicebankMetadata
 
@@ -78,6 +83,38 @@ def test_engine_blends_adjacent_notes_without_changing_project_length(tmp_path):
 
     assert audio.size == 44100
     assert np.isfinite(audio).all()
+
+
+def test_connected_notes_sustain_their_level_through_the_boundary(tmp_path):
+    notes = [
+        VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=4, lyric="a"),
+        VocalNote(id="note_2", type="vocal", pitch="A3", start=4, duration=4, lyric="a"),
+    ]
+    sample_rate = 44100
+
+    audio = SampleEngine().render_track(
+        vocal_track(notes), make_voicebank(tmp_path), 120, "1/16", sample_rate
+    )
+
+    boundary = sample_rate // 2
+    window = round(sample_rate * 0.02)
+    before = np.sqrt(np.mean(np.square(audio[boundary - window : boundary])))
+    after = np.sqrt(np.mean(np.square(audio[boundary : boundary + window])))
+    assert 0.7 <= after / before <= 1.4
+
+
+def test_transition_uses_a_shorter_crossfade_before_consonants():
+    settings = TransitionSettings(default_crossfade_ms=40, consonant_crossfade_ms=15)
+    vowel = VocalNote(id="vowel", type="vocal", pitch="A3", start=0, duration=4, lyric="あ")
+    consonant = VocalNote(
+        id="consonant", type="vocal", pitch="A3", start=0, duration=4, lyric="か"
+    )
+
+    vowel_frames = _transition_crossfade_frames(vowel, settings, 1000, 500)
+    consonant_frames = _transition_crossfade_frames(consonant, settings, 1000, 500)
+
+    assert vowel_frames == 40
+    assert consonant_frames == 15
 
 
 def test_engine_rejects_phonemes_missing_from_voicebank(tmp_path):

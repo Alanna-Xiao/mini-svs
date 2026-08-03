@@ -4,7 +4,8 @@ from typing import List
 import numpy as np
 
 from app.engine.audio import render_vocal_note
-from app.schemas.project import GridUnit, VocalTrack
+from app.lyrics import lyric_to_phonemes
+from app.schemas.project import GridUnit, VocalNote, VocalTrack
 from app.voicebank.models import LoadedVoicebank
 
 
@@ -39,7 +40,7 @@ class SampleEngine:
             return np.zeros(0, dtype=np.float32)
 
         rendered_notes: List[tuple] = []
-        previous_connected = False
+        previous_transition_frames = 0
         for index, note in enumerate(notes):
             start_seconds = ticks_to_seconds(note.start, bpm, grid)
             duration_seconds = ticks_to_seconds(note.duration, bpm, grid)
@@ -53,8 +54,10 @@ class SampleEngine:
                 gap_ms = (ticks_to_seconds(next_note.start, bpm, grid) - end_seconds) * 1000
                 connected = gap_ms <= self.transition.connect_gap_ms
                 if connected:
-                    transition_frames = min(
-                        round(self.transition.default_crossfade_ms * sample_rate / 1000),
+                    transition_frames = _transition_crossfade_frames(
+                        next_note,
+                        self.transition,
+                        sample_rate,
                         duration_frames,
                     )
                     next_pitch = next_note.pitch
@@ -66,17 +69,32 @@ class SampleEngine:
                 sample_rate,
                 transition_frames=transition_frames,
                 next_pitch=next_pitch,
-                fade_in_frames=(
-                    round(self.transition.default_crossfade_ms * sample_rate / 1000)
-                    if previous_connected
-                    else 0
+                fade_in_frames=previous_transition_frames,
+                pitch_glide_frames=round(
+                    self.transition.pitch_glide_ms * sample_rate / 1000
                 ),
             )
             rendered_notes.append((round(start_seconds * sample_rate), rendered))
-            previous_connected = connected
+            previous_transition_frames = transition_frames if connected else 0
 
         total_frames = max(start + audio.size for start, audio in rendered_notes)
         output = np.zeros(total_frames, dtype=np.float32)
         for start, audio in rendered_notes:
             output[start : start + audio.size] += audio
         return output
+
+
+def _transition_crossfade_frames(
+    next_note: VocalNote,
+    settings: TransitionSettings,
+    sample_rate: int,
+    maximum_frames: int,
+) -> int:
+    phonemes = lyric_to_phonemes(next_note.lyric)
+    starts_with_vowel = bool(phonemes and phonemes[0][0] in "aiueo")
+    crossfade_ms = (
+        settings.default_crossfade_ms
+        if starts_with_vowel
+        else settings.consonant_crossfade_ms
+    )
+    return min(round(crossfade_ms * sample_rate / 1000), maximum_frames)

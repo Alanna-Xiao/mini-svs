@@ -28,6 +28,8 @@ Implemented so far:
 
 Vocal lyrics accept romaji, hiragana, katakana, and kanji. Japanese text is split into mora-sized romaji phoneme keys before the selected voicebank is queried. A note may contain multiple kana or a multi-mora kanji reading; its duration is shared across the resolved phonemes. Every resolved phoneme must have a sample in the voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
 
+Adjacent vocal notes use phoneme-aware transitions: vowel onsets receive a longer equal-power crossfade, consonant onsets keep a shorter crossfade for articulation, and pitch changes use Rubber Band's dynamic pitch map instead of mixing two fixed-pitch renders.
+
 The bundled MuseScore General configuration exposes eight selectable presets from the same local SoundFont: acoustic grand piano, nylon guitar, acoustic bass, violin, string ensemble, trumpet, alto saxophone, and flute. Projects can add multiple independent instrument tracks, each with its own notes and General MIDI program, without duplicating the SoundFont file.
 
 Planned first version:

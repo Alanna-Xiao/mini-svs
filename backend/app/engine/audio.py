@@ -1,4 +1,7 @@
 import shutil
+import subprocess
+import tempfile
+from pathlib import Path
 from typing import Optional
 
 import librosa
@@ -20,6 +23,7 @@ def render_vocal_note(
     transition_frames: int = 0,
     next_pitch: Optional[str] = None,
     fade_in_frames: int = 0,
+    pitch_glide_frames: int = 0,
 ) -> np.ndarray:
     entered_lyric = note.lyric.strip()
     direct_phoneme = entered_lyric.lower()
@@ -75,6 +79,9 @@ def render_vocal_note(
                 ),
                 next_pitch=(next_pitch if index == len(phonemes) - 1 else None),
                 fade_in_frames=(fade_in_frames if index == 0 else 0),
+                pitch_glide_frames=(
+                    pitch_glide_frames if index == len(phonemes) - 1 else 0
+                ),
                 fade_start=index == 0,
                 fade_end=index == len(phonemes) - 1,
             )
@@ -100,31 +107,49 @@ def _render_phoneme(
     transition_frames: int = 0,
     next_pitch: Optional[str] = None,
     fade_in_frames: int = 0,
+    pitch_glide_frames: int = 0,
     fade_start: bool = True,
     fade_end: bool = True,
 ) -> np.ndarray:
     sample_metadata = voicebank.metadata.phonemes[phoneme]
     sample = _load_sample(voicebank.sample_path(phoneme), sample_rate)
-    sustained = _match_duration(sample, sample_metadata, max(1, target_frames), sample_rate)
+    sustained = _match_duration(
+        sample,
+        sample_metadata,
+        max(1, target_frames),
+        sample_rate,
+        include_release=fade_end and transition_frames == 0,
+    )
     current_steps = pitch_to_midi(note.pitch) - pitch_to_midi(sample_metadata.base_pitch)
-    rendered = _pitch_shift(sustained, sample_rate, current_steps)
 
     if transition_frames and next_pitch is not None:
         next_steps = pitch_to_midi(next_pitch) - pitch_to_midi(sample_metadata.base_pitch)
-        target = _pitch_shift(sustained, sample_rate, next_steps)
-        start = max(0, rendered.size - transition_frames)
-        blend_frames = rendered.size - start
-        blend = np.linspace(0.0, 1.0, blend_frames, dtype=np.float32)
-        rendered[start:] = rendered[start:] * (1.0 - blend) + target[start:] * blend
-        rendered[start:] *= np.linspace(1.0, 0.0, blend_frames, dtype=np.float32)
+        boundary = max(0, sustained.size - transition_frames)
+        glide_frames = min(max(1, pitch_glide_frames), sustained.size)
+        glide_start = max(0, boundary - glide_frames // 2)
+        glide_end = min(sustained.size, glide_start + glide_frames)
+        rendered = _pitch_shift_with_glide(
+            sustained,
+            sample_rate,
+            current_steps,
+            next_steps,
+            glide_start,
+            glide_end,
+        )
+        fade_frames = rendered.size - boundary
+        fade_phase = np.linspace(0.0, np.pi / 2, fade_frames, dtype=np.float32)
+        rendered[boundary:] *= np.cos(fade_phase)
+    else:
+        rendered = _pitch_shift(sustained, sample_rate, current_steps)
 
     if fade_in_frames:
         count = min(fade_in_frames, rendered.size)
-        rendered[:count] *= np.linspace(0.0, 1.0, count, dtype=np.float32)
+        phase = np.linspace(0.0, np.pi / 2, count, dtype=np.float32)
+        rendered[:count] *= np.sin(phase)
 
     edge_frames = min(max(1, round(sample_rate * 0.005)), rendered.size // 2)
     if edge_frames:
-        if fade_start:
+        if fade_start and not fade_in_frames:
             rendered[:edge_frames] *= np.linspace(0.0, 1.0, edge_frames, dtype=np.float32)
         if fade_end and transition_frames == 0:
             rendered[-edge_frames:] *= np.linspace(1.0, 0.0, edge_frames, dtype=np.float32)
@@ -162,10 +187,13 @@ def _match_duration(
     metadata: PhonemeMetadata,
     target_frames: int,
     sample_rate: int,
+    include_release: bool = True,
 ) -> np.ndarray:
     loop_start = round(metadata.loop_start_ms * sample_rate / 1000)
     loop_end = round(metadata.loop_end_ms * sample_rate / 1000)
-    release_frames = round(metadata.release_ms * sample_rate / 1000)
+    release_frames = (
+        round(metadata.release_ms * sample_rate / 1000) if include_release else 0
+    )
     if not 0 <= loop_start < loop_end <= sample.size:
         raise MiniSvsError(
             "invalid_loop_points",
@@ -184,7 +212,7 @@ def _match_duration(
     )
     attack = sample[:attack_frames]
     sustain = sample[loop_start:loop_end]
-    release = sample[-release_frames:]
+    release = sample[-release_frames:] if release_frames else np.zeros(0, dtype=np.float32)
     loop_crossfade = min(round(sample_rate * 0.02), sustain.size // 4)
     attack_crossfade = min(round(sample_rate * 0.01), attack.size, sustain.size // 2)
     release_crossfade = min(loop_crossfade, release.size, sustain.size // 2)
@@ -198,7 +226,8 @@ def _match_duration(
     )
     looped = _loop_region(sustain, sustain_frames, loop_crossfade)
     output = _append_crossfade(attack, looped, attack_crossfade)
-    output = _append_crossfade(output, release, release_crossfade)
+    if release.size:
+        output = _append_crossfade(output, release, release_crossfade)
     return _pad_to_length(output, target_frames)
 
 
@@ -247,4 +276,74 @@ def _pitch_shift(audio: np.ndarray, sample_rate: int, steps: float) -> np.ndarra
             "Rubber Band could not pitch-shift the vocal sample.",
             details={"reason": str(error)},
         ) from error
+    return _pad_to_length(np.asarray(shifted, dtype=np.float32), audio.size)
+
+
+def _pitch_shift_with_glide(
+    audio: np.ndarray,
+    sample_rate: int,
+    current_steps: float,
+    next_steps: float,
+    glide_start: int,
+    glide_end: int,
+) -> np.ndarray:
+    if current_steps == next_steps:
+        return _pitch_shift(audio, sample_rate, current_steps)
+    if shutil.which("rubberband") is None:
+        raise MiniSvsError(
+            "pitch_engine_unavailable",
+            "Rubber Band is required for formant-preserving vocal pitch shifts.",
+        )
+
+    with tempfile.TemporaryDirectory(prefix="mini-svs-glide-") as directory:
+        root = Path(directory)
+        input_path = root / "input.wav"
+        output_path = root / "output.wav"
+        pitchmap_path = root / "pitchmap.txt"
+        sf.write(input_path, audio, sample_rate, subtype="FLOAT")
+        points = {
+            0: current_steps,
+            max(0, glide_start): current_steps,
+            min(audio.size - 1, glide_end): next_steps,
+            audio.size - 1: next_steps,
+        }
+        pitchmap_path.write_text(
+            "".join(f"{frame} {steps:.8f}\n" for frame, steps in sorted(points.items())),
+            encoding="ascii",
+        )
+        try:
+            result = subprocess.run(
+                [
+                    "rubberband",
+                    "--quiet",
+                    "--fine",
+                    "--formant",
+                    "--pitchmap",
+                    str(pitchmap_path),
+                    str(input_path),
+                    str(output_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired as error:
+            raise MiniSvsError(
+                "pitch_shift_failed", "Rubber Band timed out while applying a pitch glide."
+            ) from error
+        if result.returncode != 0 or not output_path.is_file():
+            raise MiniSvsError(
+                "pitch_shift_failed",
+                "Rubber Band could not apply the vocal pitch glide.",
+                details={"reason": result.stderr.strip()},
+            )
+        shifted, rendered_rate = sf.read(output_path, dtype="float32", always_2d=False)
+        if rendered_rate != sample_rate:
+            raise MiniSvsError(
+                "pitch_shift_failed",
+                "Rubber Band returned a pitch glide at an unexpected sample rate.",
+            )
+        if shifted.ndim == 2:
+            shifted = np.mean(shifted, axis=1)
     return _pad_to_length(np.asarray(shifted, dtype=np.float32), audio.size)
