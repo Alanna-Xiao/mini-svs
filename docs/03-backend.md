@@ -16,6 +16,7 @@ backend/
     audio/
     instruments/
     storage/
+    security/
 ```
 
 ## Module Responsibilities
@@ -29,6 +30,7 @@ backend/
 - `audio`: reusable low-level audio utilities such as envelopes, crossfades, pitch conversion, and resampling.
 - `instruments`: accompaniment rendering with SoundFont/SFZ tools.
 - `storage`: project files, user configuration, generated output paths, and local asset path resolution.
+- `security`: authentication of requests forwarded by the production Worker gateway.
 
 ## API Requirements
 
@@ -46,3 +48,5 @@ API rules:
 - Paths returned to the frontend must be safe public/download URLs or opaque IDs, not arbitrary filesystem paths.
 - Backend validation must reject unknown voicebank IDs, unknown instrument IDs, invalid pitches, negative durations, and duplicate IDs.
 - Rendering errors must return structured error responses instead of raw tracebacks.
+- When `MINI_SVS_GATEWAY_TOKEN` is configured, every request must provide the matching `X-Mini-Svs-Gateway-Token` header. Local development may leave the variable unset.
+- The gateway token must be compared in constant time and must never be returned to clients or written to repository configuration.

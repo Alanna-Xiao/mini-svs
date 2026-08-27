@@ -27,6 +27,24 @@ def test_health():
     assert response.json() == {"status": "ok", "version": "0.1.0"}
 
 
+def test_gateway_token_is_required_when_configured(monkeypatch):
+    monkeypatch.setenv("MINI_SVS_GATEWAY_TOKEN", "expected-token")
+    protected_client = TestClient(create_app())
+
+    missing = protected_client.get("/health")
+    invalid = protected_client.get(
+        "/health", headers={"x-mini-svs-gateway-token": "wrong-token"}
+    )
+    accepted = protected_client.get(
+        "/health", headers={"x-mini-svs-gateway-token": "expected-token"}
+    )
+
+    assert missing.status_code == 401
+    assert missing.json()["error"]["code"] == "gateway_auth_required"
+    assert invalid.status_code == 401
+    assert accepted.status_code == 200
+
+
 def test_empty_catalogs():
     assert client.get("/voicebanks").json() == []
     assert client.get("/instruments").json() == []

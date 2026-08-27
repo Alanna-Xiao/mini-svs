@@ -124,3 +124,5 @@ The backend may convert pitch names to MIDI note numbers and grid units to secon
 - Lyric editing must stay attached to vocal notes.
 - Instrument notes must not require lyric data.
 - Playback controls must preview generated audio returned by the backend.
+- Production API requests must use same-origin `/api/*` URLs through the Worker gateway; the browser must not receive the private backend gateway token or the Tunnel origin URL.
+- When the local backend is unavailable, the UI must retain editable project state and present the structured `backend_offline` error returned by the Worker.

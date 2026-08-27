@@ -4,10 +4,12 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes import router
 from app.core.errors import MiniSvsError
+from app.security.gateway import GatewayAuthenticationMiddleware
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="mini-svs API", version="0.1.0")
+    app.add_middleware(GatewayAuthenticationMiddleware)
 
     @app.exception_handler(MiniSvsError)
     async def handle_mini_svs_error(

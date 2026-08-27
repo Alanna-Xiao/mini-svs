@@ -4,12 +4,12 @@ mini-svs is a singing voice synthesis app for GitHub release. It is intended as 
 
 ## Specification Status
 
-- Version: `0.1.0`
-- Status: Frozen
-- Frozen on: `2026-08-01`
-- Baseline tag: `spec-v0.1.0`
+- Version: `0.2.0`
+- Status: Active
+- Revised on: `2026-08-06`
+- Previous baseline tag: `spec-v0.1.0`
 
-Implementation must conform to this baseline. Functional or architectural changes require an explicit spec revision, a version update, and a new spec tag. Editorial corrections that do not change behavior may be committed without changing the spec version.
+This active revision supersedes the `0.1.0` baseline. Functional or architectural changes require an explicit spec revision and version update; a new spec tag is created when the revision is frozen. Editorial corrections that do not change behavior may be committed without changing the spec version.
 
 ## Spec Files
 
@@ -23,6 +23,7 @@ This spec is split by module:
 - `06-output.md`: export and preview output.
 - `07-instruments.md`: accompaniment instruments and rendering.
 - `08-licensing.md`: source, voice, and third-party asset licensing.
+- `09-deployment.md`: Cloudflare Worker, Tunnel, local service, and security boundaries.
 
 ## Goals
 
@@ -98,3 +99,7 @@ Boundary rules:
 - Output code must not contain synthesis logic.
 - Instrument rendering must stay separate from vocal synthesis. A mixdown may combine their rendered audio after both tracks are rendered.
 - API request/response schemas are the contract between frontend and backend; module internals should not leak through API payloads.
+
+## Runtime Architecture
+
+The public frontend and API gateway run on Cloudflare Workers. The synthesis backend, voicebank, instrument libraries, and generated output stay on the author's Mac and are reached through Cloudflare Tunnel. This deployment choice avoids paid Containers and does not change the core `Voicebank -> Engine -> Output` module boundary.

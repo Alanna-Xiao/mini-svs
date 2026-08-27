@@ -9,33 +9,9 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*"]
   },
-  "containers": [
-    {
-      "name": "mini-svs-synthesis",
-      "class_name": "MiniSvsContainer",
-      "image": "../Dockerfile",
-      "image_build_context": "..",
-      "instance_type": "basic",
-      "max_instances": 1,
-      "constraints": {
-        "regions": ["APAC"]
-      }
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "SYNTH_CONTAINER",
-        "class_name": "MiniSvsContainer"
-      }
-    ]
+  "vars": {
+    "BACKEND_ORIGIN": "https://backend-origin.mini-svs.com"
   },
-  "migrations": [
-    {
-      "tag": "v1",
-      "new_sqlite_classes": ["MiniSvsContainer"]
-    }
-  ],
   "routes": [
     {
       "pattern": "mini-svs.com",
