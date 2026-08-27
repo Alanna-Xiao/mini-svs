@@ -10,9 +10,15 @@ The app is planned around a piano-roll workflow:
 
 Users will create vocal notes in the editor, choose a voicebank, generate audio, and export or preview the result.
 
+## Demo
+
+[![Watch the narrated mini-svs demo](docs/assets/mini-svs-demo-poster.jpg)](docs/assets/mini-svs-demo.mp4)
+
+[Watch the 73-second narrated demo](docs/assets/mini-svs-demo.mp4) or try the editor at [mini-svs.com](https://mini-svs.com).
+
 ## Project Status
 
-The `0.1.0` specification is frozen. The first implementation baseline is now in development.
+The `0.2.0` specification is active. The first implementation baseline is now in development.
 
 Implemented so far:
 
@@ -23,10 +29,10 @@ Implemented so far:
 - note creation, selection, movement, resizing, deletion, and lyric editing
 - sample-based vowel synthesis with looping, pitch shifting, and note transitions
 - offline vocal and SoundFont instrument WAV rendering, waveform preview, playback, and stop controls
-- Cloudflare Worker gateway and container-ready Python synthesis service
+- Cloudflare Worker gateway with a Tunnel to the local Python synthesis service
 - backend, frontend, and browser workflow tests
 
-Vocal lyrics accept romaji, hiragana, katakana, and kanji. Japanese text is split into mora-sized romaji phoneme keys before the selected voicebank is queried. A note may contain multiple kana or a multi-mora kanji reading; its duration is shared across the resolved phonemes. Every resolved phoneme must have a sample in the voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
+Vocal lyrics accept romaji, hiragana, katakana, and kanji. Japanese text is split into timed mora-sized units before the selected voicebank is queried. A note may contain multiple kana or a multi-mora kanji reading; its duration is shared across the resolved units. Sokuon (`っ`/`ッ`) keeps its timing as a silent consonant closure instead of being pronounced as `tsu`. Every audible phoneme must have a sample in the voicebank. SoundFont instrument tracks render independently through FluidSynth and may be mixed with vocal tracks by the backend.
 
 Adjacent vocal notes use phoneme-aware transitions: vowel onsets receive a longer equal-power crossfade, consonant onsets keep a shorter crossfade for articulation, and pitch changes use Rubber Band's dynamic pitch map instead of mixing two fixed-pitch renders.
 
@@ -39,6 +45,17 @@ Planned first version:
 - local voicebank loading
 - offline `.wav` generation
 - audio preview in the frontend
+
+An isolated OpenVPI DiffSinger toolchain and universal 44.1 kHz NSF-HiFiGAN
+vocoder can be prepared locally with:
+
+```bash
+python3.11 backend/scripts/setup_diffsinger.py
+```
+
+This installs the AI framework under `.ai/`; it does not create an author voice
+model. Continuous, authorized singing recordings and training are still required
+before the AI engine can render the author's voice.
 
 ## Voicebanks
 
@@ -106,7 +123,7 @@ npm run dev
 
 Open `http://127.0.0.1:5173`. The Vite development server proxies `/api` requests to the backend at `http://127.0.0.1:8000`.
 
-Select a track and use **Render** to preview that track alone. Use **Mix** to render the vocal and instrument tracks together on the shared timeline.
+Select a track and use **Render** to preview that track alone. Open the arrow beside **Render** and choose **Render all tracks** to preview the complete vocal and instrument mix on the shared timeline.
 
 Use **Export WAV** to render every track and download the completed mix. The downloaded file uses the project ID as its filename.
 
@@ -118,31 +135,27 @@ For batch deletion, hold **Shift**, **Ctrl**, or **Command** while clicking note
 
 ## Cloudflare Deployment
 
-The frontend and API gateway run as a Cloudflare Worker. The Python synthesis engine, FluidSynth, Rubber Band, the installed author voicebank, and the local SoundFont run in a Cloudflare Container.
+The public frontend and `/api` gateway run on the free Cloudflare Workers plan. A named Cloudflare Tunnel forwards API calls to FastAPI on this Mac, where the private voicebank, SoundFont, synthesis tools, and output remain. The site stays visible while the Mac is offline, but rendering then reports that the synthesis backend is offline.
 
-Deployment requires:
-
-- a Cloudflare Workers Paid plan with Containers access
-- Docker with the Buildx plugin
-- Wrangler authenticated to the target Cloudflare account
-- `voicebanks/author_demo` and `instruments/musescore_general/MuseScore_General.sf3` installed locally
-
-The voice recordings and SoundFont are intentionally ignored by Git. Wrangler reads them from the local machine while building the private container image; raw source recordings are excluded by `.dockerignore`.
-
-Run the complete stack locally from `frontend/`:
+Provision the gateway token without placing it in `.env` or git:
 
 ```bash
-npm run build
-npx wrangler dev
+TOKEN="$(openssl rand -hex 32)"
+security add-generic-password -U -a "$USER" -s mini-svs-gateway-token -w "$TOKEN"
+cd frontend
+printf '%s' "$TOKEN" | npx wrangler secret put BACKEND_GATEWAY_TOKEN
+unset TOKEN
 ```
 
-Deploy it to the configured custom domain:
+Create `mini-svs-backend` in Cloudflare Tunnel, publish `backend-origin.mini-svs.com` to `http://127.0.0.1:8000`, then install the login services:
 
 ```bash
+python3 backend/scripts/install_macos_services.py
+cd frontend
 npm run deploy
 ```
 
-Rendered WAV files currently use temporary container storage and may disappear after the container sleeps or restarts. Users should download completed renders promptly. Persistent output storage can be added later with a private R2 bucket.
+The Mac must remain logged in, awake, and online for synthesis. Closing a laptop lid normally suspends the backend. See [docs/09-deployment.md](docs/09-deployment.md) for the complete runtime and security specification.
 
 ## License
 

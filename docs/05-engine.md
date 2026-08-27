@@ -12,11 +12,28 @@ The engine owns synthesis behavior.
 - ONNX-based inference adapter
 - DDSP experimental adapter
 
+## AI Engine Preparation
+
+The AI engine uses the OpenVPI-maintained DiffSinger implementation in an
+isolated local environment. The sample engine remains available as a fallback.
+
+- DiffSinger source and Python dependencies live under `.ai/` and are not committed.
+- The OpenVPI 44.1 kHz universal NSF-HiFiGAN vocoder is installed for waveform generation.
+- The author's acoustic and variance models must be trained from authorized continuous singing recordings; the universal vocoder alone cannot synthesize the author's voice.
+- Trained checkpoints and raw recordings must remain outside Git unless the voice owner explicitly approves distribution.
+
+Install or repair the local toolchain with Python 3.10 or newer:
+
+```bash
+python3.11 backend/scripts/setup_diffsinger.py
+```
+
 ## Required Behavior
 
 - Convert piano-roll notes into render tasks.
 - Resolve romaji, hiragana, katakana, and kanji lyrics to voicebank phoneme keys.
 - Split multi-mora lyrics within one note, divide the note duration across their phonemes, and crossfade internal boundaries.
+- Preserve sokuon (`っ`/`ッ`) as a timed silent consonant closure without requiring a `tsu` voicebank sample.
 - Ask the voicebank for the correct sample or model data.
 - Match sample duration to target note duration.
 - Shift pitch to target note.
