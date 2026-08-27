@@ -10,7 +10,7 @@ import pyrubberband as pyrb
 import soundfile as sf
 
 from app.core.errors import MiniSvsError
-from app.lyrics import lyric_to_phonemes
+from app.lyrics import LyricMora, lyric_to_morae
 from app.schemas.project import VocalNote, pitch_to_midi
 from app.voicebank.models import LoadedVoicebank, PhonemeMetadata
 
@@ -28,13 +28,14 @@ def render_vocal_note(
     entered_lyric = note.lyric.strip()
     direct_phoneme = entered_lyric.lower()
     if direct_phoneme in voicebank.metadata.phonemes:
-        phonemes = (direct_phoneme,)
+        morae = (LyricMora(phoneme=direct_phoneme),)
     else:
-        phonemes = lyric_to_phonemes(entered_lyric)
+        morae = lyric_to_morae(entered_lyric)
+    phonemes = tuple(mora.phoneme for mora in morae if mora.phoneme is not None)
     missing_phonemes = tuple(
         phoneme for phoneme in phonemes if phoneme not in voicebank.metadata.phonemes
     )
-    if not phonemes or missing_phonemes:
+    if not morae or missing_phonemes:
         resolved = ", ".join(phonemes) or "(empty)"
         missing = ", ".join(missing_phonemes) or resolved
         details = {
@@ -59,37 +60,52 @@ def render_vocal_note(
         )
 
     total_frames = max(1, duration_frames + transition_frames)
+    audible_joins = sum(
+        left.phoneme is not None and right.phoneme is not None
+        for left, right in zip(morae, morae[1:])
+    )
     internal_crossfade = min(
         round(sample_rate * 0.015),
-        total_frames // max(1, len(phonemes) * 4),
+        total_frames // max(1, len(morae) * 4),
     )
-    render_budget = total_frames + internal_crossfade * (len(phonemes) - 1)
-    segment_frames = _divide_frames(render_budget, len(phonemes))
+    render_budget = total_frames + internal_crossfade * audible_joins
+    segment_frames = _divide_frames(render_budget, len(morae))
     rendered_segments = []
-    for index, (phoneme, frames) in enumerate(zip(phonemes, segment_frames)):
+    last_audible_index = max(
+        (index for index, mora in enumerate(morae) if mora.phoneme is not None),
+        default=-1,
+    )
+    for index, (mora, frames) in enumerate(zip(morae, segment_frames)):
+        if mora.phoneme is None:
+            rendered_segments.append(np.zeros(frames, dtype=np.float32))
+            continue
+        previous_is_audible = index > 0 and morae[index - 1].phoneme is not None
+        next_is_audible = index + 1 < len(morae) and morae[index + 1].phoneme is not None
+        is_last_audible = index == last_audible_index
         rendered_segments.append(
             _render_phoneme(
-                phoneme,
+                mora.phoneme,
                 note,
                 voicebank,
                 frames,
                 sample_rate,
-                transition_frames=(
-                    transition_frames if index == len(phonemes) - 1 else 0
-                ),
-                next_pitch=(next_pitch if index == len(phonemes) - 1 else None),
+                transition_frames=(transition_frames if is_last_audible else 0),
+                next_pitch=(next_pitch if is_last_audible else None),
                 fade_in_frames=(fade_in_frames if index == 0 else 0),
-                pitch_glide_frames=(
-                    pitch_glide_frames if index == len(phonemes) - 1 else 0
-                ),
-                fade_start=index == 0,
-                fade_end=index == len(phonemes) - 1,
+                pitch_glide_frames=(pitch_glide_frames if is_last_audible else 0),
+                fade_start=not previous_is_audible,
+                fade_end=not next_is_audible,
             )
         )
 
     rendered = rendered_segments[0]
-    for segment in rendered_segments[1:]:
-        rendered = _append_crossfade(rendered, segment, internal_crossfade)
+    for index, segment in enumerate(rendered_segments[1:], start=1):
+        crossfade = (
+            internal_crossfade
+            if morae[index - 1].phoneme is not None and morae[index].phoneme is not None
+            else 0
+        )
+        rendered = _append_crossfade(rendered, segment, crossfade)
     rendered = _pad_to_length(rendered, total_frames)
 
     peak = float(np.max(np.abs(rendered)))

@@ -169,6 +169,27 @@ def test_engine_renders_multiple_kana_inside_one_note(tmp_path):
     assert np.max(np.abs(audio)) > 0
 
 
+def test_engine_renders_sokuon_as_silence_without_requiring_a_tsu_sample(tmp_path):
+    note = VocalNote(
+        id="note_1", type="vocal", pitch="A3", start=0, duration=12, lyric="きって"
+    )
+    sample_rate = 44100
+
+    audio = SampleEngine().render_track(
+        vocal_track([note]),
+        make_voicebank(tmp_path, phonemes=("ki", "te")),
+        120,
+        "1/16",
+        sample_rate,
+    )
+
+    third = audio.size // 3
+    assert audio.size == 66150
+    assert np.max(np.abs(audio[:third])) > 0
+    assert np.max(np.abs(audio[third : 2 * third])) == 0
+    assert np.max(np.abs(audio[2 * third :])) > 0
+
+
 def test_engine_reports_missing_phonemes_from_a_multi_kana_lyric(tmp_path):
     note = VocalNote(id="note_1", type="vocal", pitch="A3", start=0, duration=8, lyric="かな")
 

@@ -1,4 +1,4 @@
-from app.lyrics import lyric_to_phonemes
+from app.lyrics import lyric_to_morae, lyric_to_phonemes
 
 
 def test_splits_multiple_kana_into_mora_phonemes():
@@ -15,3 +15,11 @@ def test_resolves_kanji_readings_into_multiple_phonemes():
 
 def test_expands_katakana_long_vowel_marks():
     assert lyric_to_phonemes("スーパー") == ("su", "u", "pa", "a")
+
+
+def test_resolves_sokuon_as_a_silent_timed_mora():
+    morae = lyric_to_morae("きって")
+
+    assert tuple(mora.phoneme for mora in morae) == ("ki", None, "te")
+    assert morae[1].kind == "closure"
+    assert lyric_to_phonemes("きって") == ("ki", "te")
