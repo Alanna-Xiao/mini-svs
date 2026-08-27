@@ -46,13 +46,22 @@ button { color: inherit; }
 }
 .icon-button { width: 30px; padding: 0; }
 .command-button { gap: 7px; padding: 0 12px; border-color: #158f89; background: #0d756f; font-weight: 650; }
-.mix-button { border-color: #606873; background: #3a4047; }
 .export-button { border-color: #9a6a1f; background: #76501a; }
 .icon-button:hover:not(:disabled), .command-button:hover:not(:disabled) { background: #3a4047; }
 .command-button:hover:not(:disabled) { background: #108981; }
-.mix-button:hover:not(:disabled) { background: #4a525c; }
 .export-button:hover:not(:disabled) { background: #8d6120; }
 .icon-button:disabled, .command-button:disabled { color: #626871; cursor: not-allowed; }
+.render-menu { position: relative; }
+.render-split { display: flex; }
+.render-primary { border-radius: 4px 0 0 4px; }
+.render-toggle { width: 28px; padding: 0; border-left-color: #075e5a; border-radius: 0 4px 4px 0; }
+.render-options { position: absolute; z-index: 20; top: 34px; left: 0; min-width: 206px; padding: 4px; border: 1px solid #505761; border-radius: 4px; background: #24282d; box-shadow: 0 8px 18px rgb(0 0 0 / 35%); }
+.render-options button { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 7px; width: 100%; min-height: 46px; padding: 7px 8px; border: 0; border-radius: 3px; color: #e9ecef; background: transparent; text-align: left; cursor: pointer; }
+.render-options button:hover, .render-options button:focus-visible { background: #373d44; outline: none; }
+.render-options svg { margin-top: 2px; color: #18b7af; }
+.render-options strong, .render-options small { display: block; }
+.render-options strong { font-size: 11px; }
+.render-options small { margin-top: 3px; color: #929ba4; font-size: 9px; }
 
 .bpm-control { display: flex; align-items: center; gap: 6px; color: #aeb5bd; font-size: 11px; font-weight: 700; }
 .bpm-control input { width: 58px; height: 27px; border: 1px solid #464b52; border-radius: 3px; color: #f3f4f5; background: #25282d; padding: 0 7px; }
@@ -162,6 +171,9 @@ button { color: inherit; }
   .transport { grid-column: 2; padding-right: 8px; }
   .transport .command-button { width: 30px; padding: 0; }
   .transport .command-button span { display: none; }
+  .transport .render-toggle { width: 25px; }
+  .transport .render-options { right: 0; left: auto; }
+  .transport .render-options span { display: block; }
   .project-controls { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; padding: 0 8px; border-top: 1px solid #292d32; }
   .workspace { grid-template: 82px minmax(180px, 1fr) 156px / minmax(0, 1fr); }
   .track-list { display: flex; grid-row: 1; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid #0c0d0f; }

@@ -40,7 +40,7 @@ test("rendered vocal audio enables preview controls", async ({ page }) => {
   await expect(play).toBeDisabled();
   await expect(stop).toBeDisabled();
 
-  await page.getByRole("button", { name: "Render" }).click();
+  await page.getByRole("button", { name: "Render", exact: true }).click();
 
   await expect(page.locator(".statusbar")).toContainText("Rendered 2.00 s");
   await expect(play).toBeEnabled();
@@ -53,7 +53,7 @@ test("one vocal note can render multiple kana", async ({ page }) => {
   await page.goto("/");
   await page.getByLabel("Lyric").fill("かな");
 
-  await page.getByRole("button", { name: "Render" }).click();
+  await page.getByRole("button", { name: "Render", exact: true }).click();
 
   await expect(page.locator(".statusbar")).toContainText("Rendered 2.00 s");
   await expect(page.getByTitle("Play or pause preview")).toBeEnabled();
@@ -66,7 +66,7 @@ test("piano track renders an instrument stem", async ({ page }) => {
   const responsePromise = page.waitForResponse(
     (response) => response.url().endsWith("/api/render") && response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Render" }).click();
+  await page.getByRole("button", { name: "Render", exact: true }).click();
   const response = await responsePromise;
   expect(response.ok()).toBe(true);
   const payload = await response.json();
@@ -76,13 +76,14 @@ test("piano track renders an instrument stem", async ({ page }) => {
   await expect(page.getByTitle("Play or pause preview")).toBeEnabled();
 });
 
-test("mix combines vocal and piano stems", async ({ page }) => {
+test("render menu combines all vocal and instrument stems", async ({ page }) => {
   await page.goto("/");
   const responsePromise = page.waitForResponse(
     (response) => response.url().endsWith("/api/render") && response.request().method() === "POST",
   );
 
-  await page.getByRole("button", { name: "Mix" }).click();
+  await page.getByRole("button", { name: "Render options" }).click();
+  await page.getByRole("menuitem", { name: /Render all tracks/ }).click();
   const response = await responsePromise;
   expect(response.ok()).toBe(true);
   const payload = await response.json();
@@ -91,7 +92,7 @@ test("mix combines vocal and piano stems", async ({ page }) => {
     { trackId: "vocal_1", kind: "vocal" },
     { trackId: "instrument_1", kind: "instrument" },
   ]);
-  await expect(page.locator(".statusbar")).toContainText("Mixed");
+  await expect(page.locator(".statusbar")).toContainText("Rendered all");
 });
 
 test("export downloads a mixed WAV file", async ({ page }) => {

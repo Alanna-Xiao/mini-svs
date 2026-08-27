@@ -1,10 +1,11 @@
-import { AudioWaveform, Download, Layers3, Play, Square } from "lucide-react";
+import { Download, Play, Square } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { fetchRenderedAudio, renderProject } from "../api/client";
 import { AudioPreview, type AudioPreviewHandle } from "../audio/AudioPreview";
 import { saveAudioBlob, wavFileName } from "../audio/export";
 import { NoteInspector } from "../components/NoteInspector";
+import { RenderMenu } from "../components/RenderMenu";
 import { TrackList } from "../components/TrackList";
 import { PianoRoll } from "../editor/PianoRoll";
 import { useProjectStore } from "../state/projectStore";
@@ -23,14 +24,14 @@ export function App() {
   const audioPreview = useRef<AudioPreviewHandle>(null);
 
   const handleRender = async (trackIds?: string[]) => {
-    const isMix = trackIds === undefined;
-    setStatus(isMix ? "Mixing..." : "Rendering...");
+    const isAllTracks = trackIds === undefined;
+    setStatus(isAllTracks ? "Rendering all tracks..." : "Rendering...");
     setOutputUrl(null);
     setIsRendering(true);
     try {
       const result = await renderProject(project, trackIds);
       setOutputUrl(`/api${result.outputUrl}`);
-      setStatus(`${isMix ? "Mixed" : "Rendered"} ${result.metadata.durationSeconds.toFixed(2)} s`);
+      setStatus(`${isAllTracks ? "Rendered all" : "Rendered"} ${result.metadata.durationSeconds.toFixed(2)} s`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Render failed");
     } finally {
@@ -77,24 +78,11 @@ export function App() {
           >
             <Square size={15} fill="currentColor" aria-hidden="true" />
           </button>
-          <button
-            className="command-button"
-            aria-label="Render"
-            title="Render active track"
+          <RenderMenu
             disabled={isRendering}
-            onClick={() => handleRender([activeTrackId])}
-          >
-            <AudioWaveform size={17} aria-hidden="true" /> <span>Render</span>
-          </button>
-          <button
-            className="command-button mix-button"
-            aria-label="Mix"
-            title="Preview all tracks"
-            disabled={isRendering}
-            onClick={() => handleRender()}
-          >
-            <Layers3 size={17} aria-hidden="true" /> <span>Mix</span>
-          </button>
+            onRenderActive={() => handleRender([activeTrackId])}
+            onRenderAll={() => handleRender()}
+          />
           <button
             className="command-button export-button"
             aria-label="Export WAV"
